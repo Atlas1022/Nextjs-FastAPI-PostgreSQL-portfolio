@@ -5,8 +5,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db, test_connection
 from models import Project
-from schemas import ProjectResponse
-
+from schemas import ProjectCreate, ProjectUpdate, ProjectResponse
 from fastapi import Response
 from pydantic import BaseModel
 from models import Project, AdminUser
@@ -62,6 +61,147 @@ def database_health_check():
             status_code=503,
             detail="Database connection failed."
         )
+
+# Admin-only endpoint: create a project
+@app.post(
+    "/api/admin/projects",
+    response_model=ProjectResponse,
+    status_code=201
+)
+def create_project(
+    project_data: ProjectCreate,
+    db: Session = Depends(get_db),
+    admin: AdminUser = Depends(get_current_admin)
+):
+    # Check whether the slug already exists
+    existing_project = db.query(Project).filter(
+        Project.slug == project_data.slug
+    ).first()
+
+    if existing_project:
+        raise HTTPException(
+            status_code=409,
+            detail="A project with this slug already exists."
+        )
+
+    # Create a new project
+    new_project = Project(
+        **project_data.model_dump()
+    )
+
+    try:
+        db.add(new_project)
+        db.commit()
+        db.refresh(new_project)
+
+        return new_project
+
+    except SQLAlchemyError:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to create project."
+        )
+
+# Admin-only endpoint: update a project
+@app.put(
+    "/api/admin/projects/{project_id}",
+    response_model=ProjectResponse
+)
+def update_project(
+    project_id: int,
+    project_data: ProjectUpdate,
+    db: Session = Depends(get_db),
+    admin: AdminUser = Depends(get_current_admin)
+):
+    # Find the existing project
+    project = db.query(Project).filter(
+        Project.id == project_id
+    ).first()
+
+    if project is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Project not found."
+        )
+
+    # Get only fields supplied in the request
+    update_data = project_data.model_dump(
+        exclude_unset=True
+    )
+
+    # Check whether the new slug belongs to another project
+    new_slug = update_data.get("slug")
+
+    if new_slug is not None:
+        existing_project = db.query(Project).filter(
+            Project.slug == new_slug,
+            Project.id != project_id
+        ).first()
+
+        if existing_project:
+            raise HTTPException(
+                status_code=409,
+                detail="A project with this slug already exists."
+            )
+
+    # Update project fields
+    for field, value in update_data.items():
+        setattr(project, field, value)
+
+    try:
+        db.commit()
+        db.refresh(project)
+
+        return project
+
+    except SQLAlchemyError:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to update project."
+        )
+
+# Admin-only endpoint: delete a project
+@app.delete(
+    "/api/admin/projects/{project_id}",
+    status_code=200
+)
+def delete_project(
+    project_id: int,
+    db: Session = Depends(get_db),
+    admin: AdminUser = Depends(get_current_admin)
+):
+    # Find the existing project
+    project = db.query(Project).filter(
+        Project.id == project_id
+    ).first()
+
+    if project is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Project not found."
+        )
+
+    try:
+        db.delete(project)
+        db.commit()
+
+        return {
+            "message": "Project deleted successfully.",
+            "project_id": project_id
+        }
+
+    except SQLAlchemyError:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to delete project."
+        )
+
 
 @app.post("/api/admin/login")
 def admin_login(
