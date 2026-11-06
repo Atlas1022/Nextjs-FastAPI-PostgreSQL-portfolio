@@ -1,17 +1,22 @@
+
 import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-
 from fastapi import Cookie, Depends, HTTPException
-from itsdangerous import BadSignature, SignatureExpired
+from itsdangerous import (
+    BadSignature,
+    SignatureExpired,
+    URLSafeTimedSerializer,
+)
+from pwdlib import PasswordHash
 from sqlalchemy.orm import Session
 
 from database import get_db
-from itsdangerous import URLSafeTimedSerializer
+from models import AdminUser
 
 
-# Load environment variables from the project root
+# Load environment variables
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(PROJECT_ROOT / ".env.local")
 
@@ -24,9 +29,7 @@ if not SESSION_SECRET_KEY:
         "SESSION_SECRET_KEY was not found in the root .env.local file."
     )
 
-
 SESSION_COOKIE_NAME = "portfolio_admin_session"
-
 SESSION_MAX_AGE = 60 * 60 * 8  # 8 hours
 
 session_serializer = URLSafeTimedSerializer(
@@ -34,20 +37,15 @@ session_serializer = URLSafeTimedSerializer(
     salt="portfolio-admin-session"
 )
 
-from pwdlib import PasswordHash
-
-from models import AdminUser
-
 
 # Password hashing configuration
 password_hash = PasswordHash.recommended()
 
 
-# Verify administrator credentials
 def verify_admin_password(
     username: str,
     password: str,
-    db
+    db: Session
 ):
     admin = db.query(AdminUser).filter(
         AdminUser.username == username
@@ -63,6 +61,7 @@ def verify_admin_password(
         return None
 
     return admin
+
 
 # Verify administrator session
 def get_current_admin(
@@ -91,8 +90,9 @@ def get_current_admin(
         )
 
     admin_id = session_data.get("admin_id")
+    token_version = session_data.get("session_version")
 
-    if not isinstance(admin_id, int):
+    if type(admin_id) is not int or type(token_version) is not int:
         raise HTTPException(
             status_code=401,
             detail="Invalid session."
@@ -107,6 +107,13 @@ def get_current_admin(
         raise HTTPException(
             status_code=401,
             detail="Administrator account not found or inactive."
+        )
+
+    # Reject sessions issued before an account change
+    if token_version != admin.session_version:
+        raise HTTPException(
+            status_code=401,
+            detail="Session has been revoked. Please sign in again."
         )
 
     return admin

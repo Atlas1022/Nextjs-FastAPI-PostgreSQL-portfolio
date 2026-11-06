@@ -239,7 +239,8 @@ def admin_login(
 
     # Create signed session data
     session_token = session_serializer.dumps({
-        "admin_id": admin.id
+        "admin_id": admin.id,
+        "session_version": admin.session_version
     })
 
     # Set HTTP-only session cookie

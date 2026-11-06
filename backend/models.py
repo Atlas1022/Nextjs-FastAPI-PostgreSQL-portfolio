@@ -56,6 +56,13 @@ class AdminUser(Base):
         nullable=False
     )
 
+    session_version: Mapped[int] = mapped_column(
+        Integer,
+        default=1,
+        server_default="1",
+        nullable=False
+    )
+
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         default=True,
