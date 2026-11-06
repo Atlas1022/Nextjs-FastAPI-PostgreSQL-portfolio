@@ -9,9 +9,11 @@ from schemas import ProjectResponse
 
 from fastapi import Response
 from pydantic import BaseModel
+from models import Project, AdminUser
 
 from auth import (
     verify_admin_password,
+    get_current_admin,
     SESSION_SECRET_KEY,
     SESSION_COOKIE_NAME,
     SESSION_MAX_AGE,
@@ -98,6 +100,30 @@ def admin_login(
     return {
         "message": "Administrator login successful.",
         "username": admin.username
+    }
+
+@app.get("/api/admin/me")
+def get_admin_profile(
+    admin: AdminUser = Depends(get_current_admin)
+):
+    return {
+        "id": admin.id,
+        "username": admin.username,
+        "is_active": admin.is_active
+    }
+
+@app.post("/api/admin/logout")
+def admin_logout(response: Response):
+    response.delete_cookie(
+        key=SESSION_COOKIE_NAME,
+        path="/",
+        httponly=True,
+        secure=False,
+        samesite="lax"
+    )
+
+    return {
+        "message": "Administrator logout successful."
     }
 
 # Public endpoint: retrieve all projects
