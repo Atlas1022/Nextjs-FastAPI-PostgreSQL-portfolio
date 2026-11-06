@@ -1,14 +1,19 @@
 ﻿
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Response
+
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from database import get_db, test_connection
-from models import Project
+
 from schemas import ProjectCreate, ProjectUpdate, ProjectResponse
-from fastapi import Response
+
 from pydantic import BaseModel
+
 from models import Project, AdminUser
+from models import Project
 
 from auth import (
     verify_admin_password,
@@ -22,6 +27,17 @@ from itsdangerous import URLSafeTimedSerializer
 
 
 app = FastAPI(title="Portfolio API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # Session serializer
 session_serializer = URLSafeTimedSerializer(
