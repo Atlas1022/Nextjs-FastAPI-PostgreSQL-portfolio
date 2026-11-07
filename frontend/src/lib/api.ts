@@ -5,6 +5,17 @@ if (!API_BASE_URL) {
   throw new Error("NEXT_PUBLIC_API_URL is not configured.");
 }
 
+// Custom API error with HTTP status
+export class ApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 export async function apiFetch(
   endpoint: string,
   options: RequestInit = {}
@@ -21,8 +32,9 @@ export async function apiFetch(
   if (!response.ok) {
     const errorData = await response.json().catch(() => null);
 
-    throw new Error(
-      errorData?.detail || `API request failed: ${response.status}`
+    throw new ApiError(
+      errorData?.detail || `API request failed: ${response.status}`,
+      response.status
     );
   }
 
