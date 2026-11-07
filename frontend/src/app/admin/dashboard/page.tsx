@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
@@ -43,7 +42,7 @@ const initialForm: ProjectForm = {
   is_featured: false,
 };
 
-export default function AdminDashboardPage() {
+export default function AdminDashboard() {
   const router = useRouter();
 
   const [admin, setAdmin] = useState<Admin | null>(null);
@@ -51,8 +50,11 @@ export default function AdminDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   const [form, setForm] = useState<ProjectForm>(initialForm);
-  const [isSaving, setIsSaving] = useState(false);
 
+  const [editingProjectId, setEditingProjectId] = useState<number | null>(null);
+
+  const [isDeletingProjectId, setIsDeletingProjectId] = useState<number | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -71,9 +73,7 @@ export default function AdminDashboardPage() {
         }
 
         setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : "Unable to load dashboard."
+          error instanceof Error ? error.message : "Failed to load dashboard."
         );
       } finally {
         setIsLoading(false);
@@ -84,9 +84,7 @@ export default function AdminDashboardPage() {
   }, [router]);
 
   function handleInputChange(
-    event: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement
-    >
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) {
     const { name, value } = event.target;
 
@@ -105,32 +103,52 @@ export default function AdminDashboardPage() {
     }));
   }
 
-  async function handleCreateProject(
-    event: FormEvent<HTMLFormElement>
-  ) {
-    event.preventDefault();
+  function handleEditProject(project: Project) {
+    setEditingProjectId(project.id);
+
+    setForm({
+      title: project.title,
+      slug: project.slug,
+      description: project.description,
+      tech_stack: project.tech_stack ?? "",
+      project_url: project.project_url ?? "",
+      image_url: project.image_url ?? "",
+      is_featured: project.is_featured,
+    });
 
     setErrorMessage("");
     setSuccessMessage("");
-    setIsSaving(true);
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  async function handleDeleteProject(project: Project) {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${project.title}"? This action cannot be undone.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsDeletingProjectId(project.id);
+    setErrorMessage("");
+    setSuccessMessage("");
 
     try {
-      const newProject = await apiFetch("/api/admin/projects", {
-        method: "POST",
-        body: JSON.stringify({
-          title: form.title.trim(),
-          slug: form.slug.trim(),
-          description: form.description.trim(),
-          tech_stack: form.tech_stack.trim() || null,
-          project_url: form.project_url.trim() || null,
-          image_url: form.image_url.trim() || null,
-          is_featured: form.is_featured,
-        }),
+      await apiFetch(`/api/admin/projects/${project.id}`, {
+        method: "DELETE",
       });
 
-      setProjects((previous) => [...previous, newProject]);
-      setForm(initialForm);
-      setSuccessMessage("Project created successfully!");
+      setProjects((previous) =>
+        previous.filter((item) => item.id !== project.id)
+      );
+
+      if (editingProjectId === project.id) {
+        setEditingProjectId(null);
+        setForm(initialForm);
+      }
+
+      setSuccessMessage("Project deleted successfully!");
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         router.replace("/admin/login");
@@ -138,9 +156,73 @@ export default function AdminDashboardPage() {
       }
 
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Unable to create project."
+        error instanceof Error ? error.message : "Failed to delete project."
+      );
+    } finally {
+      setIsDeletingProjectId(null);
+    }
+  }
+  function handleCancelEdit() {
+    setEditingProjectId(null);
+    setForm(initialForm);
+    setErrorMessage("");
+    setSuccessMessage("");
+  }
+
+  async function handleSubmitProject(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setIsSaving(true);
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    const projectData = {
+      title: form.title.trim(),
+      slug: form.slug.trim(),
+      description: form.description.trim(),
+      tech_stack: form.tech_stack.trim() || null,
+      project_url: form.project_url.trim() || null,
+      image_url: form.image_url.trim() || null,
+      is_featured: form.is_featured,
+    };
+
+    try {
+      if (editingProjectId !== null) {
+        const updatedProject = await apiFetch(
+          `/api/admin/projects/${editingProjectId}`,
+          {
+            method: "PUT",
+            body: JSON.stringify(projectData),
+          }
+        );
+
+        setProjects((previous) =>
+          previous.map((project) =>
+            project.id === updatedProject.id ? updatedProject : project
+          )
+        );
+
+        setEditingProjectId(null);
+        setForm(initialForm);
+        setSuccessMessage("Project updated successfully!");
+      } else {
+        const newProject = await apiFetch("/api/admin/projects", {
+          method: "POST",
+          body: JSON.stringify(projectData),
+        });
+
+        setProjects((previous) => [...previous, newProject]);
+        setForm(initialForm);
+        setSuccessMessage("Project created successfully!");
+      }
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        router.replace("/admin/login");
+        return;
+      }
+
+      setErrorMessage(
+        error instanceof Error ? error.message : "Failed to save project."
       );
     } finally {
       setIsSaving(false);
@@ -152,155 +234,90 @@ export default function AdminDashboardPage() {
       await apiFetch("/api/admin/logout", {
         method: "POST",
       });
-
+    } finally {
       router.replace("/admin/login");
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Unable to log out."
-      );
+      router.refresh();
     }
   }
 
   if (isLoading) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-100">
-        <p className="text-slate-600">Loading dashboard...</p>
-      </main>
-    );
+    return <main className="p-8">Loading dashboard...</main>;
   }
 
   return (
-    <main className="min-h-screen bg-slate-100">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
+    <main className="min-h-screen bg-gray-50 p-6 text-gray-900 md:p-10">
+      <div className="mx-auto max-w-6xl">
+        <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl font-bold text-slate-900">
-              Admin Dashboard
-            </h1>
-            <p className="text-sm text-slate-500">
-              Portfolio management
+            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+            <p className="mt-2 text-gray-600">
+              Welcome, {admin?.username}
             </p>
           </div>
 
-          <div className="flex items-center gap-4">
-            <span className="hidden text-sm text-slate-600 sm:inline">
-              {admin?.username}
-            </span>
-
-            <button
-              onClick={handleLogout}
-              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <section className="mx-auto max-w-6xl px-6 py-10">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-slate-900">
-            Welcome, {admin?.username}!
-          </h2>
-          <p className="mt-2 text-slate-600">
-            Manage your portfolio projects from here.
-          </p>
-        </div>
+          <button
+            onClick={handleLogout}
+            className="rounded-lg bg-red-600 px-5 py-2 text-white hover:bg-red-700"
+          >
+            Logout
+          </button>
+        </header>
 
         {errorMessage && (
-          <div className="mb-6 rounded-lg bg-red-50 p-4 text-sm text-red-700">
+          <p className="mb-4 rounded-lg bg-red-100 p-3 text-red-700">
             {errorMessage}
-          </div>
+          </p>
         )}
 
         {successMessage && (
-          <div className="mb-6 rounded-lg bg-green-50 p-4 text-sm text-green-700">
+          <p className="mb-4 rounded-lg bg-green-100 p-3 text-green-700">
             {successMessage}
-          </div>
+          </p>
         )}
 
-        {/* Project overview */}
-        <div className="mb-8 rounded-xl bg-white p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-slate-900">
-            Project Overview
-          </h3>
+        <section className="mb-8 rounded-xl bg-white p-6 shadow-sm">
+          <h2 className="mb-5 text-xl font-semibold">
+            {editingProjectId !== null ? "Edit Project" : "Create Project"}
+          </h2>
 
-          <p className="mt-2 text-3xl font-bold text-blue-600">
-            {projects.length}
-          </p>
-
-          <p className="text-sm text-slate-500">
-            Total projects
-          </p>
-        </div>
-
-        {/* Create project form */}
-        <div className="mb-8 rounded-xl bg-white p-6 shadow-sm">
-          <h3 className="mb-6 text-lg font-semibold text-slate-900">
-            Add New Project
-          </h3>
-
-          <form
-            onSubmit={handleCreateProject}
-            className="space-y-5"
-          >
+          <form onSubmit={handleSubmitProject} className="space-y-4">
             <div>
-              <label
-                htmlFor="title"
-                className="mb-2 block text-sm font-medium text-slate-700"
-              >
-                Project Title *
+              <label htmlFor="title" className="mb-1 block font-medium">
+                Project Title
               </label>
-
               <input
                 id="title"
                 name="title"
-                type="text"
                 value={form.title}
                 onChange={handleInputChange}
-                maxLength={150}
                 required
-                className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                placeholder="My Portfolio Website"
+                maxLength={150}
+                className="w-full rounded-lg border p-3"
               />
             </div>
 
             <div>
-              <label
-                htmlFor="slug"
-                className="mb-2 block text-sm font-medium text-slate-700"
-              >
-                Project Slug *
+              <label htmlFor="slug" className="mb-1 block font-medium">
+                Slug
               </label>
-
               <input
                 id="slug"
                 name="slug"
-                type="text"
                 value={form.slug}
                 onChange={handleInputChange}
-                maxLength={180}
                 required
-                className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                placeholder="my-portfolio-website"
+                maxLength={180}
+                className="w-full rounded-lg border p-3"
               />
-
-              <p className="mt-1 text-xs text-slate-500">
-                Used in the project URL. Use lowercase letters,
-                numbers, and hyphens.
+              <p className="mt-1 text-sm text-gray-500">
+                Example: my-portfolio-project
               </p>
             </div>
 
             <div>
-              <label
-                htmlFor="description"
-                className="mb-2 block text-sm font-medium text-slate-700"
-              >
-                Description *
+              <label htmlFor="description" className="mb-1 block font-medium">
+                Description
               </label>
-
               <textarea
                 id="description"
                 name="description"
@@ -308,39 +325,29 @@ export default function AdminDashboardPage() {
                 onChange={handleInputChange}
                 required
                 rows={5}
-                className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                placeholder="Describe your project..."
+                className="w-full rounded-lg border p-3"
               />
             </div>
 
             <div>
-              <label
-                htmlFor="tech_stack"
-                className="mb-2 block text-sm font-medium text-slate-700"
-              >
+              <label htmlFor="tech_stack" className="mb-1 block font-medium">
                 Technology Stack
               </label>
-
               <input
                 id="tech_stack"
                 name="tech_stack"
-                type="text"
                 value={form.tech_stack}
                 onChange={handleInputChange}
                 maxLength={500}
-                className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                placeholder="Next.js, FastAPI, PostgreSQL, Tailwind CSS"
+                placeholder="Next.js, FastAPI, PostgreSQL"
+                className="w-full rounded-lg border p-3"
               />
             </div>
 
             <div>
-              <label
-                htmlFor="project_url"
-                className="mb-2 block text-sm font-medium text-slate-700"
-              >
+              <label htmlFor="project_url" className="mb-1 block font-medium">
                 Project URL
               </label>
-
               <input
                 id="project_url"
                 name="project_url"
@@ -348,19 +355,15 @@ export default function AdminDashboardPage() {
                 value={form.project_url}
                 onChange={handleInputChange}
                 maxLength={500}
-                className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                placeholder="https://github.com/username/project"
+                placeholder="https://example.com"
+                className="w-full rounded-lg border p-3"
               />
             </div>
 
             <div>
-              <label
-                htmlFor="image_url"
-                className="mb-2 block text-sm font-medium text-slate-700"
-              >
-                Project Image URL
+              <label htmlFor="image_url" className="mb-1 block font-medium">
+                Image URL
               </label>
-
               <input
                 id="image_url"
                 name="image_url"
@@ -368,82 +371,96 @@ export default function AdminDashboardPage() {
                 value={form.image_url}
                 onChange={handleInputChange}
                 maxLength={500}
-                className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                placeholder="https://example.com/project-image.jpg"
+                placeholder="https://example.com/image.jpg"
+                className="w-full rounded-lg border p-3"
               />
             </div>
 
-            <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2">
               <input
-                id="is_featured"
                 type="checkbox"
                 checked={form.is_featured}
                 onChange={handleFeaturedChange}
-                className="h-4 w-4 rounded border-slate-300 text-blue-600"
+                className="h-4 w-4"
               />
+              Featured Project
+            </label>
 
-              <label
-                htmlFor="is_featured"
-                className="text-sm font-medium text-slate-700"
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700 disabled:opacity-50"
               >
-                Mark this project as featured
-              </label>
+                {isSaving
+                  ? "Saving..."
+                  : editingProjectId !== null
+                    ? "Update Project"
+                    : "Create Project"}
+              </button>
+
+              {editingProjectId !== null && (
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  disabled={isSaving}
+                  className="rounded-lg border px-6 py-3 hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+              )}
             </div>
-
-            <button
-              type="submit"
-              disabled={isSaving}
-              className="rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isSaving ? "Creating Project..." : "Create Project"}
-            </button>
           </form>
-        </div>
+        </section>
 
-        {/* Project list */}
-        <div className="rounded-xl bg-white p-6 shadow-sm">
-          <h3 className="mb-6 text-lg font-semibold text-slate-900">
-            Your Projects
-          </h3>
+        <section className="rounded-xl bg-white p-6 shadow-sm">
+          <h2 className="mb-5 text-xl font-semibold">
+            Existing Projects ({projects.length})
+          </h2>
 
           {projects.length === 0 ? (
-            <p className="py-8 text-center text-slate-500">
-              No projects found. Add your first project above.
-            </p>
+            <p className="text-gray-500">No projects found.</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="w-full border-collapse text-left">
                 <thead>
-                  <tr className="border-b border-slate-200 text-slate-500">
-                    <th className="px-4 py-3">Title</th>
-                    <th className="px-4 py-3">Slug</th>
-                    <th className="px-4 py-3">Featured</th>
-                    <th className="px-4 py-3">Created</th>
+                  <tr className="border-b text-sm text-gray-600">
+                    <th className="p-3">Title</th>
+                    <th className="p-3">Slug</th>
+                    <th className="p-3">Featured</th>
+                    <th className="p-3">Created</th>
+                    <th className="p-3">Actions</th>
                   </tr>
                 </thead>
 
                 <tbody>
                   {projects.map((project) => (
-                    <tr
-                      key={project.id}
-                      className="border-b border-slate-100"
-                    >
-                      <td className="px-4 py-4 font-medium text-slate-900">
-                        {project.title}
-                      </td>
-
-                      <td className="px-4 py-4 text-slate-600">
-                        {project.slug}
-                      </td>
-
-                      <td className="px-4 py-4">
+                    <tr key={project.id} className="border-b">
+                      <td className="p-3 font-medium">{project.title}</td>
+                      <td className="p-3">{project.slug}</td>
+                      <td className="p-3">
                         {project.is_featured ? "Yes" : "No"}
                       </td>
+                      <td className="p-3">
+                        {new Date(project.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="p-3">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleEditProject(project)}
+                            className="rounded-lg bg-amber-500 px-4 py-2 text-white hover:bg-amber-600"
+                          >
+                            Edit
+                          </button>
 
-                      <td className="px-4 py-4 text-slate-600">
-                        {new Date(
-                          project.created_at
-                        ).toLocaleDateString()}
+                          <button
+                            onClick={() => handleDeleteProject(project)}
+                            disabled={isDeletingProjectId === project.id}
+                            className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
+                          >
+                            {isDeletingProjectId === project.id ? "Deleting..." : "Delete"}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -451,8 +468,8 @@ export default function AdminDashboardPage() {
               </table>
             </div>
           )}
-        </div>
-      </section>
+        </section>
+      </div>
     </main>
   );
 }
