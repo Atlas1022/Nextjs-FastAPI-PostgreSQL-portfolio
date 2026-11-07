@@ -36,58 +36,74 @@ export default async function Home() {
 
   try {
     projects = await getProjects();
+    projects.sort((a, b) => {
+      return Number(b.is_featured) - Number(a.is_featured);
+    });
   } catch (error) {
     console.error("Project loading error:", error);
     errorMessage = "Unable to load projects. Please try again later.";
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
+    <main className="min-h-screen">
+      
       {/* Navigation */}
-      <header className="border-b border-slate-200 bg-white">
+      <header className="sticky top-0 z-50 border-b border-slate-800 bg-[#0b1120]/95 backdrop-blur">
         <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <a href="/" className="text-xl font-bold tracking-tight">
-            My Portfolio
+          <a href="/" className="text-xl font-bold tracking-tight text-white">
+            My Portfolio<span className="text-sky-400">.</span>
           </a>
 
-          <div className="flex items-center gap-6 text-sm font-medium">
-            <a href="#about" className="hover:text-blue-600">
+          <div className="flex items-center gap-6 text-sm font-medium text-slate-300">
+            <a href="#about" className="transition hover:text-sky-400">
               About
             </a>
-            <a href="#projects" className="hover:text-blue-600">
+            <a href="#projects" className="transition hover:text-sky-400">
               Projects
             </a>
-            <a href="#contact" className="hover:text-blue-600">
+            <a href="#contact" className="transition hover:text-sky-400">
               Contact
             </a>
           </div>
         </nav>
       </header>
 
+
+            
       {/* Hero section */}
-      <section className="mx-auto max-w-6xl px-6 py-24">
+      <section className="relative mx-auto max-w-6xl px-6 py-28 sm:py-36">
         <div className="max-w-3xl">
-          <p className="mb-4 font-semibold text-blue-600">
+          <p className="mb-5 font-semibold tracking-widest text-sky-400">
             FULL-STACK WEB DEVELOPER
           </p>
 
-          <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-6xl">
+          <h1 className="text-4xl font-bold leading-tight tracking-tight text-white sm:text-6xl">
             Building modern web applications and digital experiences.
           </h1>
 
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
+          <p className="mt-7 max-w-2xl text-lg leading-8 text-slate-400">
             I develop responsive, scalable, and user-friendly web
             applications using modern frontend and backend technologies.
           </p>
 
-          <a
-            href="#projects"
-            className="mt-8 inline-block rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
-          >
-            Explore My Projects
-          </a>
+          <div className="mt-10 flex flex-wrap gap-4">
+            <a
+              href="#projects"
+              className="rounded-lg bg-sky-500 px-7 py-3.5 font-semibold text-slate-950 transition hover:bg-sky-400"
+            >
+              Explore My Projects →
+            </a>
+
+            <a
+              href="#contact"
+              className="rounded-lg border border-slate-700 px-7 py-3.5 font-semibold text-white transition hover:border-sky-400 hover:text-sky-400"
+            >
+              Contact Me
+            </a>
+          </div>
         </div>
       </section>
+
 
       {/* About section */}
       <section id="about" className="border-y border-slate-200 bg-white">
