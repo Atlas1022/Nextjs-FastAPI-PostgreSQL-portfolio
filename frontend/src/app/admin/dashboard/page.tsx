@@ -32,6 +32,26 @@ type ProjectForm = {
   is_featured: boolean;
 };
 
+type Skill = {
+  id: number;
+  name: string;
+  category: string;
+  proficiency: string;
+  created_at: string;
+};
+
+type SkillForm = {
+  name: string;
+  category: string;
+  proficiency: string;
+};
+
+const initialSkillForm: SkillForm = {
+  name: "",
+  category: "",
+  proficiency: "Intermediate",
+};
+
 const initialForm: ProjectForm = {
   title: "",
   slug: "",
@@ -48,6 +68,19 @@ export default function AdminDashboard() {
   const [admin, setAdmin] = useState<Admin | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [skills, setSkills] = useState<Skill[]>([]);
+
+  const [skillForm, setSkillForm] =
+    useState<SkillForm>(initialSkillForm);
+
+  const [editingSkillId, setEditingSkillId] =
+    useState<number | null>(null);
+
+  const [isSavingSkill, setIsSavingSkill] = useState(false);
+
+  const [isDeletingSkillId, setIsDeletingSkillId] =
+    useState<number | null>(null);
 
   const [form, setForm] = useState<ProjectForm>(initialForm);
 
@@ -66,6 +99,8 @@ export default function AdminDashboard() {
 
         const projectData = await apiFetch("/api/projects");
         setProjects(projectData);
+        const skillData = await apiFetch("/api/skills");
+        setSkills(skillData);
       } catch (error) {
         if (error instanceof ApiError && error.status === 401) {
           router.replace("/admin/login");
@@ -226,6 +261,135 @@ export default function AdminDashboard() {
       );
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  function handleSkillInputChange(
+    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) {
+    const { name, value } = event.target;
+
+    setSkillForm((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+  }
+
+  function handleEditSkill(skill: Skill) {
+    setEditingSkillId(skill.id);
+
+    setSkillForm({
+      name: skill.name,
+      category: skill.category,
+      proficiency: skill.proficiency,
+    });
+
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleCancelSkillEdit() {
+    setEditingSkillId(null);
+    setSkillForm(initialSkillForm);
+    setErrorMessage("");
+    setSuccessMessage("");
+  }
+
+  async function handleDeleteSkill(skill: Skill) {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${skill.name}"? This action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    setIsDeletingSkillId(skill.id);
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    try {
+      await apiFetch(`/api/admin/skills/${skill.id}`, {
+        method: "DELETE",
+      });
+
+      setSkills((previous) =>
+        previous.filter((item) => item.id !== skill.id)
+      );
+
+      if (editingSkillId === skill.id) {
+        setEditingSkillId(null);
+        setSkillForm(initialSkillForm);
+      }
+
+      setSuccessMessage("Skill deleted successfully!");
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        router.replace("/admin/login");
+        return;
+      }
+
+      setErrorMessage(
+        error instanceof Error ? error.message : "Failed to delete skill."
+      );
+    } finally {
+      setIsDeletingSkillId(null);
+    }
+  }
+
+  async function handleSubmitSkill(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setIsSavingSkill(true);
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    const skillData = {
+      name: skillForm.name.trim(),
+      category: skillForm.category.trim(),
+      proficiency: skillForm.proficiency,
+    };
+
+    try {
+      if (editingSkillId !== null) {
+        const updatedSkill = await apiFetch(
+          `/api/admin/skills/${editingSkillId}`,
+          {
+            method: "PUT",
+            body: JSON.stringify(skillData),
+          }
+        );
+
+        setSkills((previous) =>
+          previous.map((skill) =>
+            skill.id === updatedSkill.id ? updatedSkill : skill
+          )
+        );
+
+        setEditingSkillId(null);
+        setSkillForm(initialSkillForm);
+        setSuccessMessage("Skill updated successfully!");
+      } else {
+        const newSkill = await apiFetch("/api/admin/skills", {
+          method: "POST",
+          body: JSON.stringify(skillData),
+        });
+
+        setSkills((previous) => [...previous, newSkill]);
+        setSkillForm(initialSkillForm);
+        setSuccessMessage("Skill created successfully!");
+      }
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        router.replace("/admin/login");
+        return;
+      }
+
+      setErrorMessage(
+        error instanceof Error ? error.message : "Failed to save skill."
+      );
+    } finally {
+      setIsSavingSkill(false);
     }
   }
 
@@ -459,6 +623,146 @@ export default function AdminDashboard() {
                             className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
                           >
                             {isDeletingProjectId === project.id ? "Deleting..." : "Delete"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+        {/* Skills Management */}
+        <section className="mt-8 rounded-xl bg-white p-6 shadow-sm">
+          <h2 className="mb-5 text-xl font-semibold">
+            {editingSkillId !== null ? "Edit Skill" : "Create Skill"}
+          </h2>
+
+          <form onSubmit={handleSubmitSkill} className="space-y-4">
+            <div>
+              <label htmlFor="skill-name" className="mb-1 block font-medium">
+                Skill Name
+              </label>
+              <input
+                id="skill-name"
+                name="name"
+                value={skillForm.name}
+                onChange={handleSkillInputChange}
+                required
+                maxLength={100}
+                placeholder="Python"
+                className="w-full rounded-lg border p-3"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="skill-category" className="mb-1 block font-medium">
+                Category
+              </label>
+              <input
+                id="skill-category"
+                name="category"
+                value={skillForm.category}
+                onChange={handleSkillInputChange}
+                required
+                maxLength={100}
+                placeholder="Programming Languages"
+                className="w-full rounded-lg border p-3"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="skill-proficiency" className="mb-1 block font-medium">
+                Proficiency
+              </label>
+              <select
+                id="skill-proficiency"
+                name="proficiency"
+                value={skillForm.proficiency}
+                onChange={handleSkillInputChange}
+                required
+                className="w-full rounded-lg border p-3"
+              >
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced</option>
+                <option value="Expert">Expert</option>
+              </select>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="submit"
+                disabled={isSavingSkill}
+                className="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {isSavingSkill
+                  ? "Saving..."
+                  : editingSkillId !== null
+                    ? "Update Skill"
+                    : "Create Skill"}
+              </button>
+
+              {editingSkillId !== null && (
+                <button
+                  type="button"
+                  onClick={handleCancelSkillEdit}
+                  disabled={isSavingSkill}
+                  className="rounded-lg border px-6 py-3 hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
+          </form>
+        </section>
+
+        {/* Skills List */}
+        <section className="mt-8 rounded-xl bg-white p-6 shadow-sm">
+          <h2 className="mb-5 text-xl font-semibold">
+            Existing Skills ({skills.length})
+          </h2>
+
+          {skills.length === 0 ? (
+            <p className="text-gray-500">No skills found.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-left">
+                <thead>
+                  <tr className="border-b text-sm text-gray-600">
+                    <th className="p-3">Name</th>
+                    <th className="p-3">Category</th>
+                    <th className="p-3">Proficiency</th>
+                    <th className="p-3">Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {skills.map((skill) => (
+                    <tr key={skill.id} className="border-b">
+                      <td className="p-3 font-medium">{skill.name}</td>
+                      <td className="p-3">{skill.category}</td>
+                      <td className="p-3">{skill.proficiency}</td>
+                      <td className="p-3">
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleEditSkill(skill)}
+                            className="rounded-lg bg-amber-500 px-4 py-2 text-white hover:bg-amber-600"
+                          >
+                            Edit
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteSkill(skill)}
+                            disabled={isDeletingSkillId === skill.id}
+                            className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
+                          >
+                            {isDeletingSkillId === skill.id
+                              ? "Deleting..."
+                              : "Delete"}
                           </button>
                         </div>
                       </td>
