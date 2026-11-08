@@ -8,12 +8,18 @@ from sqlalchemy.orm import Session
 
 from database import get_db, test_connection
 
-from schemas import ProjectCreate, ProjectUpdate, ProjectResponse
+from schemas import (
+    ProjectCreate,
+    ProjectUpdate,
+    ProjectResponse,
+    SkillCreate,
+    SkillUpdate,
+    SkillResponse,
+)
 
 from pydantic import BaseModel
 
-from models import Project, AdminUser
-from models import Project
+from models import Project, AdminUser, Skill
 
 from auth import (
     verify_admin_password,
@@ -282,6 +288,161 @@ def admin_logout(response: Response):
     return {
         "message": "Administrator logout successful."
     }
+
+# ==========================================
+# Skills API
+# ==========================================
+
+# Public endpoint: retrieve all skills
+@app.get(
+    "/api/skills",
+    response_model=list[SkillResponse]
+)
+def get_skills(db: Session = Depends(get_db)):
+    skills = (
+        db.query(Skill)
+        .order_by(Skill.category.asc(), Skill.name.asc())
+        .all()
+    )
+
+    return skills
+
+
+# Admin-only endpoint: create a skill
+@app.post(
+    "/api/admin/skills",
+    response_model=SkillResponse,
+    status_code=201
+)
+def create_skill(
+    skill_data: SkillCreate,
+    db: Session = Depends(get_db),
+    admin: AdminUser = Depends(get_current_admin)
+):
+    # Check whether the skill already exists
+    existing_skill = db.query(Skill).filter(
+        Skill.name.ilike(skill_data.name)
+    ).first()
+
+    if existing_skill:
+        raise HTTPException(
+            status_code=409,
+            detail="This skill already exists."
+        )
+
+    new_skill = Skill(
+        **skill_data.model_dump()
+    )
+
+    try:
+        db.add(new_skill)
+        db.commit()
+        db.refresh(new_skill)
+
+        return new_skill
+
+    except SQLAlchemyError:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to create skill."
+        )
+
+
+# Admin-only endpoint: update a skill
+@app.put(
+    "/api/admin/skills/{skill_id}",
+    response_model=SkillResponse
+)
+def update_skill(
+    skill_id: int,
+    skill_data: SkillUpdate,
+    db: Session = Depends(get_db),
+    admin: AdminUser = Depends(get_current_admin)
+):
+    skill = db.query(Skill).filter(
+        Skill.id == skill_id
+    ).first()
+
+    if skill is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Skill not found."
+        )
+
+    update_data = skill_data.model_dump(
+        exclude_unset=True
+    )
+
+    new_name = update_data.get("name")
+
+    if new_name is not None:
+        existing_skill = db.query(Skill).filter(
+            Skill.name.ilike(new_name),
+            Skill.id != skill_id
+        ).first()
+
+        if existing_skill:
+            raise HTTPException(
+                status_code=409,
+                detail="This skill already exists."
+            )
+
+    for field, value in update_data.items():
+        setattr(skill, field, value)
+
+    try:
+        db.commit()
+        db.refresh(skill)
+
+        return skill
+
+    except SQLAlchemyError:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to update skill."
+        )
+
+
+# Admin-only endpoint: delete a skill
+@app.delete(
+    "/api/admin/skills/{skill_id}",
+    status_code=200
+)
+def delete_skill(
+    skill_id: int,
+    db: Session = Depends(get_db),
+    admin: AdminUser = Depends(get_current_admin)
+):
+    skill = db.query(Skill).filter(
+        Skill.id == skill_id
+    ).first()
+
+    if skill is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Skill not found."
+        )
+
+    try:
+        db.delete(skill)
+        db.commit()
+
+        return {
+            "message": "Skill deleted successfully.",
+            "skill_id": skill_id
+        }
+
+    except SQLAlchemyError:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to delete skill."
+        )
 
 # Public endpoint: retrieve all projects
 @app.get(
