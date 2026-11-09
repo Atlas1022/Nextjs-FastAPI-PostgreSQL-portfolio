@@ -12,6 +12,14 @@ type Project = {
   created_at: string;
 };
 
+type Skill = {
+  id: number;
+  name: string;
+  category: string;
+  proficiency: string;
+  created_at: string;
+};
+
 async function getProjects(): Promise<Project[]> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
@@ -30,9 +38,30 @@ async function getProjects(): Promise<Project[]> {
   return response.json();
 }
 
+async function getSkills(): Promise<Skill[]> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  if (!apiUrl) {
+    throw new Error("API URL is not configured.");
+  }
+
+  const response = await fetch(`${apiUrl}/api/skills`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to retrieve skills from the API.");
+  }
+
+  return response.json();
+}
+
 export default async function Home() {
   let projects: Project[] = [];
+  let skills: Skill[] = [];
+
   let errorMessage = "";
+  let skillErrorMessage = "";
 
   try {
     projects = await getProjects();
@@ -42,6 +71,13 @@ export default async function Home() {
   } catch (error) {
     console.error("Project loading error:", error);
     errorMessage = "Unable to load projects. Please try again later.";
+  }
+
+  try {
+    skills = await getSkills();
+  } catch (error) {
+    console.error("Skill loading error:", error);
+    skillErrorMessage = "Unable to load skills. Please try again later.";
   }
 
   return (
@@ -58,9 +94,15 @@ export default async function Home() {
             <a href="#about" className="transition hover:text-sky-400">
               About
             </a>
+
+            <a href="#skills" className="transition hover:text-sky-400">
+              Skills
+            </a>
+
             <a href="#projects" className="transition hover:text-sky-400">
               Projects
             </a>
+
             <a href="#contact" className="transition hover:text-sky-400">
               Contact
             </a>
@@ -115,6 +157,78 @@ export default async function Home() {
             reliable web applications, designing clean user interfaces,
             and developing efficient backend systems.
           </p>
+        </div>
+      </section>
+
+      {/* Skills section */}
+      <section
+        id="skills"
+        className="border-y border-slate-800 bg-[#0b1120] text-white"
+      >
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <div className="mb-10">
+            <p className="font-semibold tracking-widest text-sky-400">
+              MY EXPERTISE
+            </p>
+
+            <h2 className="mt-2 text-3xl font-bold">
+              Technical Skills
+            </h2>
+
+            <p className="mt-3 text-slate-400">
+              Technologies and tools I use to build modern web applications.
+            </p>
+          </div>
+
+          {skillErrorMessage ? (
+            <p className="rounded-lg bg-red-950 p-5 text-red-300">
+              {skillErrorMessage}
+            </p>
+          ) : skills.length === 0 ? (
+            <p className="rounded-lg border border-slate-700 p-8 text-center text-slate-400">
+              No skills are available yet.
+            </p>
+          ) : (
+            <div className="grid gap-8 md:grid-cols-2">
+              {Object.entries(
+                skills.reduce<Record<string, Skill[]>>((groups, skill) => {
+                  if (!groups[skill.category]) {
+                    groups[skill.category] = [];
+                  }
+
+                  groups[skill.category].push(skill);
+
+                  return groups;
+                }, {})
+              ).map(([category, categorySkills]) => (
+                <div
+                  key={category}
+                  className="rounded-xl border border-slate-800 bg-slate-900 p-6"
+                >
+                  <h3 className="mb-5 text-xl font-semibold text-sky-400">
+                    {category}
+                  </h3>
+
+                  <div className="space-y-4">
+                    {categorySkills.map((skill) => (
+                      <div
+                        key={skill.id}
+                        className="flex items-center justify-between gap-4 border-b border-slate-800 pb-3 last:border-0 last:pb-0"
+                      >
+                        <span className="font-medium text-slate-200">
+                          {skill.name}
+                        </span>
+
+                        <span className="rounded-full bg-sky-950 px-3 py-1 text-xs font-semibold text-sky-300">
+                          {skill.proficiency}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
