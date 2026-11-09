@@ -622,62 +622,109 @@ export default function AdminDashboard() {
           </section>
         )}
 
+        
         <section className="rounded-xl bg-white p-6 shadow-sm">
           <h2 className="mb-5 text-xl font-semibold">
-            Existing Projects ({projects.length})
+            Project Management ({projects.length})
           </h2>
 
           {projects.length === 0 ? (
             <p className="text-gray-500">No projects found.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left">
-                <thead>
-                  <tr className="border-b text-sm text-gray-600">
-                    <th className="p-3">Title</th>
-                    <th className="p-3">Slug</th>
-                    <th className="p-3">Featured</th>
-                    <th className="p-3">Created</th>
-                    <th className="p-3">Actions</th>
-                  </tr>
-                </thead>
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {projects.map((project) => (
+                <article
+                  key={project.id}
+                  className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                >
+                  {/* Project image */}
+                  {project.image_url ? (
+                    <img
+                      src={project.image_url}
+                      alt={project.title}
+                      className="h-52 w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-52 items-center justify-center bg-slate-100 text-slate-400">
+                      No project image
+                    </div>
+                  )}
 
-                <tbody>
-                  {projects.map((project) => (
-                    <tr key={project.id} className="border-b">
-                      <td className="p-3 font-medium">{project.title}</td>
-                      <td className="p-3">{project.slug}</td>
-                      <td className="p-3">
-                        {project.is_featured ? "Yes" : "No"}
-                      </td>
-                      <td className="p-3">
-                        {new Date(project.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="p-3">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEditProject(project)}
-                            className="rounded-lg bg-amber-500 px-4 py-2 text-white hover:bg-amber-600"
-                          >
-                            Edit
-                          </button>
+                  <div className="p-6">
+                    {project.is_featured && (
+                      <span className="mb-3 inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                        Featured Project
+                      </span>
+                    )}
 
-                          <button
-                            onClick={() => handleDeleteProject(project)}
-                            disabled={isDeletingProjectId === project.id}
-                            className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
-                          >
-                            {isDeletingProjectId === project.id ? "Deleting..." : "Delete"}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                    <h3 className="text-xl font-bold">
+                      {project.title}
+                    </h3>
+
+                    <p className="mt-3 line-clamp-3 leading-7 text-slate-600">
+                      {project.description}
+                    </p>
+
+                    {project.tech_stack && (
+                      <div className="mt-5 flex flex-wrap gap-2">
+                        {project.tech_stack
+                          .split(",")
+                          .map((technology) => technology.trim())
+                          .filter(Boolean)
+                          .map((technology) => (
+                            <span
+                              key={technology}
+                              className="rounded-md bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700"
+                            >
+                              {technology}
+                            </span>
+                          ))}
+                      </div>
+                    )}
+
+                    {project.project_url && (
+                      <a
+                        href={project.project_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-6 inline-block font-semibold text-blue-600 hover:text-blue-800"
+                      >
+                        View Project →
+                      </a>
+                    )}
+
+                    <div className="mt-6 flex flex-wrap gap-3 border-t border-slate-200 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => handleEditProject(project)}
+                        className="rounded-lg bg-amber-500 px-4 py-2 text-white hover:bg-amber-600"
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteProject(project)}
+                        disabled={isDeletingProjectId === project.id}
+                        className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
+                      >
+                        {isDeletingProjectId === project.id
+                          ? "Deleting..."
+                          : "Delete"}
+                      </button>
+                    </div>
+
+                    <p className="mt-3 text-xs text-gray-500">
+                      Created: {new Date(project.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </article>
+              ))}
             </div>
           )}
         </section>
+
+
         {/* Skills Management */}
         <section className="mt-8 rounded-xl bg-white p-6 shadow-sm">
           <h2 className="mb-5 text-xl font-semibold">
