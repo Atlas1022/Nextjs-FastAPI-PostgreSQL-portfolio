@@ -268,6 +268,7 @@ export default function AdminDashboard() {
         setForm(initialForm);
         setSuccessMessage("Project created successfully!");
       }
+      setShowProjectForm(false);
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         router.replace("/admin/login");
@@ -469,143 +470,157 @@ export default function AdminDashboard() {
           </p>
         )}
 
-        <section className="mb-8 rounded-xl bg-white p-6 shadow-sm">
-          <h2 className="mb-5 text-xl font-semibold">
-            {editingProjectId !== null ? "Edit Project" : "Create Project"}
-          </h2>
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Projects ({projects.length})</h2>
 
-          <form onSubmit={handleSubmitProject} className="space-y-4">
-            <div>
-              <label htmlFor="title" className="mb-1 block font-medium">
-                Project Title
+          <button
+            type="button"
+            onClick={handleCreateProject}
+            className="rounded-lg bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-700"
+          >
+            + Create Project
+          </button>
+        </div>
+
+        {showProjectForm && (
+          <section className="mb-8 rounded-xl bg-white p-6 shadow-sm">
+            <h2 className="mb-5 text-xl font-semibold">
+              {editingProjectId !== null ? "Edit Project" : "Create Project"}
+            </h2>
+
+            <form onSubmit={handleSubmitProject} className="space-y-4">
+              <div>
+                <label htmlFor="title" className="mb-1 block font-medium">
+                  Project Title
+                </label>
+                <input
+                  id="title"
+                  name="title"
+                  value={form.title}
+                  onChange={handleInputChange}
+                  required
+                  maxLength={150}
+                  className="w-full rounded-lg border p-3"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="slug" className="mb-1 block font-medium">
+                  Slug
+                </label>
+                <input
+                  id="slug"
+                  name="slug"
+                  value={form.slug}
+                  onChange={handleInputChange}
+                  required
+                  maxLength={180}
+                  className="w-full rounded-lg border p-3"
+                />
+                <p className="mt-1 text-sm text-gray-500">
+                  Example: my-portfolio-project
+                </p>
+              </div>
+
+              <div>
+                <label htmlFor="description" className="mb-1 block font-medium">
+                  Description
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={form.description}
+                  onChange={handleInputChange}
+                  required
+                  rows={5}
+                  className="w-full rounded-lg border p-3"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="tech_stack" className="mb-1 block font-medium">
+                  Technology Stack
+                </label>
+                <input
+                  id="tech_stack"
+                  name="tech_stack"
+                  value={form.tech_stack}
+                  onChange={handleInputChange}
+                  maxLength={500}
+                  placeholder="Next.js, FastAPI, PostgreSQL"
+                  className="w-full rounded-lg border p-3"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="project_url" className="mb-1 block font-medium">
+                  Project URL
+                </label>
+                <input
+                  id="project_url"
+                  name="project_url"
+                  type="url"
+                  value={form.project_url}
+                  onChange={handleInputChange}
+                  maxLength={500}
+                  placeholder="https://example.com"
+                  className="w-full rounded-lg border p-3"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="image_url" className="mb-1 block font-medium">
+                  Image URL
+                </label>
+                <input
+                  id="image_url"
+                  name="image_url"
+                  type="url"
+                  value={form.image_url}
+                  onChange={handleInputChange}
+                  maxLength={500}
+                  placeholder="https://example.com/image.jpg"
+                  className="w-full rounded-lg border p-3"
+                />
+              </div>
+
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={form.is_featured}
+                  onChange={handleFeaturedChange}
+                  className="h-4 w-4"
+                />
+                Featured Project
               </label>
-              <input
-                id="title"
-                name="title"
-                value={form.title}
-                onChange={handleInputChange}
-                required
-                maxLength={150}
-                className="w-full rounded-lg border p-3"
-              />
-            </div>
 
-            <div>
-              <label htmlFor="slug" className="mb-1 block font-medium">
-                Slug
-              </label>
-              <input
-                id="slug"
-                name="slug"
-                value={form.slug}
-                onChange={handleInputChange}
-                required
-                maxLength={180}
-                className="w-full rounded-lg border p-3"
-              />
-              <p className="mt-1 text-sm text-gray-500">
-                Example: my-portfolio-project
-              </p>
-            </div>
-
-            <div>
-              <label htmlFor="description" className="mb-1 block font-medium">
-                Description
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                value={form.description}
-                onChange={handleInputChange}
-                required
-                rows={5}
-                className="w-full rounded-lg border p-3"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="tech_stack" className="mb-1 block font-medium">
-                Technology Stack
-              </label>
-              <input
-                id="tech_stack"
-                name="tech_stack"
-                value={form.tech_stack}
-                onChange={handleInputChange}
-                maxLength={500}
-                placeholder="Next.js, FastAPI, PostgreSQL"
-                className="w-full rounded-lg border p-3"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="project_url" className="mb-1 block font-medium">
-                Project URL
-              </label>
-              <input
-                id="project_url"
-                name="project_url"
-                type="url"
-                value={form.project_url}
-                onChange={handleInputChange}
-                maxLength={500}
-                placeholder="https://example.com"
-                className="w-full rounded-lg border p-3"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="image_url" className="mb-1 block font-medium">
-                Image URL
-              </label>
-              <input
-                id="image_url"
-                name="image_url"
-                type="url"
-                value={form.image_url}
-                onChange={handleInputChange}
-                maxLength={500}
-                placeholder="https://example.com/image.jpg"
-                className="w-full rounded-lg border p-3"
-              />
-            </div>
-
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={form.is_featured}
-                onChange={handleFeaturedChange}
-                className="h-4 w-4"
-              />
-              Featured Project
-            </label>
-
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700 disabled:opacity-50"
-              >
-                {isSaving
-                  ? "Saving..."
-                  : editingProjectId !== null
-                    ? "Update Project"
-                    : "Create Project"}
-              </button>
-
-              {editingProjectId !== null && (
+              <div className="flex flex-wrap gap-3">
                 <button
-                  type="button"
-                  onClick={handleCancelEdit}
+                  type="submit"
                   disabled={isSaving}
-                  className="rounded-lg border px-6 py-3 hover:bg-gray-100"
+                  className="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700 disabled:opacity-50"
                 >
-                  Cancel
+                  {isSaving
+                    ? "Saving..."
+                    : editingProjectId !== null
+                      ? "Update Project"
+                      : "Create Project"}
                 </button>
-              )}
-            </div>
-          </form>
-        </section>
+
+                {editingProjectId !== null && (
+                  <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    disabled={isSaving}
+                    className="rounded-lg border px-6 py-3 hover:bg-gray-100"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </form>
+          </section>
+        )}
 
         <section className="rounded-xl bg-white p-6 shadow-sm">
           <h2 className="mb-5 text-xl font-semibold">
