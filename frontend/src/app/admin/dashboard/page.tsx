@@ -86,6 +86,12 @@ export default function AdminDashboard() {
 
   const [editingProjectId, setEditingProjectId] = useState<number | null>(null);
 
+  // Control Project form visibility
+  const [showProjectForm, setShowProjectForm] = useState(false);
+
+  // Control Skill form visibility
+  const [showSkillForm, setShowSkillForm] = useState(false);
+
   const [isDeletingProjectId, setIsDeletingProjectId] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -138,7 +144,18 @@ export default function AdminDashboard() {
     }));
   }
 
+  function handleCreateProject() {
+    setEditingProjectId(null);
+    setForm(initialForm);
+    setErrorMessage("");
+    setSuccessMessage("");
+    setShowProjectForm(true);
+    setShowSkillForm(false);
+  }
+
   function handleEditProject(project: Project) {
+    setShowProjectForm(true);
+    setShowSkillForm(false);
     setEditingProjectId(project.id);
 
     setForm({
@@ -198,6 +215,7 @@ export default function AdminDashboard() {
     }
   }
   function handleCancelEdit() {
+    setShowProjectForm(false);
     setEditingProjectId(null);
     setForm(initialForm);
     setErrorMessage("");
@@ -275,7 +293,18 @@ export default function AdminDashboard() {
     }));
   }
 
+  function handleCreateSkill() {
+    setEditingSkillId(null);
+    setSkillForm(initialSkillForm);
+    setErrorMessage("");
+    setSuccessMessage("");
+    setShowSkillForm(true);
+    setShowProjectForm(false);
+  }
+
   function handleEditSkill(skill: Skill) {
+    setShowSkillForm(true);
+    setShowProjectForm(false);
     setEditingSkillId(skill.id);
 
     setSkillForm({
@@ -291,6 +320,7 @@ export default function AdminDashboard() {
   }
 
   function handleCancelSkillEdit() {
+    setShowSkillForm(false);
     setEditingSkillId(null);
     setSkillForm(initialSkillForm);
     setErrorMessage("");
