@@ -410,6 +410,7 @@ export default function AdminDashboard() {
         setSkillForm(initialSkillForm);
         setSuccessMessage("Skill created successfully!");
       }
+      setShowSkillForm(false);
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         router.replace("/admin/login");
@@ -624,10 +625,7 @@ export default function AdminDashboard() {
 
         
         <section className="rounded-xl bg-white p-6 shadow-sm">
-          <h2 className="mb-5 text-xl font-semibold">
-            Project Management ({projects.length})
-          </h2>
-
+          
           {projects.length === 0 ? (
             <p className="text-gray-500">No projects found.</p>
           ) : (
@@ -725,97 +723,113 @@ export default function AdminDashboard() {
         </section>
 
 
-        {/* Skills Management */}
-        <section className="mt-8 rounded-xl bg-white p-6 shadow-sm">
-          <h2 className="mb-5 text-xl font-semibold">
-            {editingSkillId !== null ? "Edit Skill" : "Create Skill"}
+        
+
+        {/* Skills Management Header */}
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold">
+            Skills ({skills.length})
           </h2>
 
-          <form onSubmit={handleSubmitSkill} className="space-y-4">
-            <div>
-              <label htmlFor="skill-name" className="mb-1 block font-medium">
-                Skill Name
-              </label>
-              <input
-                id="skill-name"
-                name="name"
-                value={skillForm.name}
-                onChange={handleSkillInputChange}
-                required
-                maxLength={100}
-                placeholder="Python"
-                className="w-full rounded-lg border p-3"
-              />
-            </div>
+          <button
+            type="button"
+            onClick={handleCreateSkill}
+            className="rounded-lg bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-700"
+          >
+            + Create Skill
+          </button>
+        </div>
 
-            <div>
-              <label htmlFor="skill-category" className="mb-1 block font-medium">
-                Category
-              </label>
-              <input
-                id="skill-category"
-                name="category"
-                value={skillForm.category}
-                onChange={handleSkillInputChange}
-                required
-                maxLength={100}
-                placeholder="Programming Languages"
-                className="w-full rounded-lg border p-3"
-              />
-            </div>
+        {/* Skill Form */}
+        {showSkillForm && (
+          <section className="mb-8 rounded-xl bg-white p-6 shadow-sm">
+            <h2 className="mb-5 text-xl font-semibold">
+              {editingSkillId !== null ? "Edit Skill" : "Create Skill"}
+            </h2>
 
-            <div>
-              <label htmlFor="skill-proficiency" className="mb-1 block font-medium">
-                Proficiency
-              </label>
-              <select
-                id="skill-proficiency"
-                name="proficiency"
-                value={skillForm.proficiency}
-                onChange={handleSkillInputChange}
-                required
-                className="w-full rounded-lg border p-3"
-              >
-                <option value="Beginner">Beginner</option>
-                <option value="Intermediate">Intermediate</option>
-                <option value="Advanced">Advanced</option>
-                <option value="Expert">Expert</option>
-              </select>
-            </div>
+            <form onSubmit={handleSubmitSkill} className="space-y-4">
+              <div>
+                <label htmlFor="skill-name" className="mb-1 block font-medium">
+                  Skill Name
+                </label>
+                <input
+                  id="skill-name"
+                  name="name"
+                  value={skillForm.name}
+                  onChange={handleSkillInputChange}
+                  required
+                  maxLength={100}
+                  placeholder="Python"
+                  className="w-full rounded-lg border p-3"
+                />
+              </div>
 
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="submit"
-                disabled={isSavingSkill}
-                className="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700 disabled:opacity-50"
-              >
-                {isSavingSkill
-                  ? "Saving..."
-                  : editingSkillId !== null
-                    ? "Update Skill"
-                    : "Create Skill"}
-              </button>
+              <div>
+                <label htmlFor="skill-category" className="mb-1 block font-medium">
+                  Category
+                </label>
+                <input
+                  id="skill-category"
+                  name="category"
+                  value={skillForm.category}
+                  onChange={handleSkillInputChange}
+                  required
+                  maxLength={100}
+                  placeholder="Programming Languages"
+                  className="w-full rounded-lg border p-3"
+                />
+              </div>
 
-              {editingSkillId !== null && (
-                <button
-                  type="button"
-                  onClick={handleCancelSkillEdit}
-                  disabled={isSavingSkill}
-                  className="rounded-lg border px-6 py-3 hover:bg-gray-100"
+              <div>
+                <label htmlFor="skill-proficiency" className="mb-1 block font-medium">
+                  Proficiency
+                </label>
+                <select
+                  id="skill-proficiency"
+                  name="proficiency"
+                  value={skillForm.proficiency}
+                  onChange={handleSkillInputChange}
+                  required
+                  className="w-full rounded-lg border p-3"
                 >
-                  Cancel
+                  <option value="Beginner">Beginner</option>
+                  <option value="Intermediate">Intermediate</option>
+                  <option value="Advanced">Advanced</option>
+                  <option value="Expert">Expert</option>
+                </select>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="submit"
+                  disabled={isSavingSkill}
+                  className="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {isSavingSkill
+                    ? "Saving..."
+                    : editingSkillId !== null
+                      ? "Update Skill"
+                      : "Create Skill"}
                 </button>
-              )}
-            </div>
-          </form>
-        </section>
+
+                {editingSkillId !== null && (
+                  <button
+                    type="button"
+                    onClick={handleCancelSkillEdit}
+                    disabled={isSavingSkill}
+                    className="rounded-lg border px-6 py-3 hover:bg-gray-100"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </form>
+          </section>
+        )}
 
         {/* Skills List */}
         <section className="mt-8 rounded-xl bg-white p-6 shadow-sm">
-          <h2 className="mb-5 text-xl font-semibold">
-            Existing Skills ({skills.length})
-          </h2>
-
+          
           {skills.length === 0 ? (
             <p className="text-gray-500">No skills found.</p>
           ) : (
