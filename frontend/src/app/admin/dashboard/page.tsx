@@ -470,414 +470,418 @@ export default function AdminDashboard() {
             {successMessage}
           </p>
         )}
+        {/* Project Management Section */}
+        <section className="mb-12 rounded-2xl border border-blue-200 bg-blue-50/50 p-6 shadow-sm md:p-8">
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-2xl font-bold">Projects ({projects.length})</h2>
 
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Projects ({projects.length})</h2>
+            <button
+              type="button"
+              onClick={handleCreateProject}
+              className="rounded-lg bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-700"
+            >
+              + Create Project
+            </button>
+          </div>
 
-          <button
-            type="button"
-            onClick={handleCreateProject}
-            className="rounded-lg bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-700"
-          >
-            + Create Project
-          </button>
-        </div>
+          {showProjectForm && (
+            <section className="mb-8 rounded-xl bg-white p-6 shadow-sm">
+              <h2 className="mb-5 text-xl font-semibold">
+                {editingProjectId !== null ? "Edit Project" : "Create Project"}
+              </h2>
 
-        {showProjectForm && (
-          <section className="mb-8 rounded-xl bg-white p-6 shadow-sm">
-            <h2 className="mb-5 text-xl font-semibold">
-              {editingProjectId !== null ? "Edit Project" : "Create Project"}
-            </h2>
+              <form onSubmit={handleSubmitProject} className="space-y-4">
+                <div>
+                  <label htmlFor="title" className="mb-1 block font-medium">
+                    Project Title
+                  </label>
+                  <input
+                    id="title"
+                    name="title"
+                    value={form.title}
+                    onChange={handleInputChange}
+                    required
+                    maxLength={150}
+                    className="w-full rounded-lg border p-3"
+                  />
+                </div>
 
-            <form onSubmit={handleSubmitProject} className="space-y-4">
-              <div>
-                <label htmlFor="title" className="mb-1 block font-medium">
-                  Project Title
+                <div>
+                  <label htmlFor="slug" className="mb-1 block font-medium">
+                    Slug
+                  </label>
+                  <input
+                    id="slug"
+                    name="slug"
+                    value={form.slug}
+                    onChange={handleInputChange}
+                    required
+                    maxLength={180}
+                    className="w-full rounded-lg border p-3"
+                  />
+                  <p className="mt-1 text-sm text-gray-500">
+                    Example: my-portfolio-project
+                  </p>
+                </div>
+
+                <div>
+                  <label htmlFor="description" className="mb-1 block font-medium">
+                    Description
+                  </label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    value={form.description}
+                    onChange={handleInputChange}
+                    required
+                    rows={5}
+                    className="w-full rounded-lg border p-3"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="tech_stack" className="mb-1 block font-medium">
+                    Technology Stack
+                  </label>
+                  <input
+                    id="tech_stack"
+                    name="tech_stack"
+                    value={form.tech_stack}
+                    onChange={handleInputChange}
+                    maxLength={500}
+                    placeholder="Next.js, FastAPI, PostgreSQL"
+                    className="w-full rounded-lg border p-3"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="project_url" className="mb-1 block font-medium">
+                    Project URL
+                  </label>
+                  <input
+                    id="project_url"
+                    name="project_url"
+                    type="url"
+                    value={form.project_url}
+                    onChange={handleInputChange}
+                    maxLength={500}
+                    placeholder="https://example.com"
+                    className="w-full rounded-lg border p-3"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="image_url" className="mb-1 block font-medium">
+                    Image URL
+                  </label>
+                  <input
+                    id="image_url"
+                    name="image_url"
+                    type="url"
+                    value={form.image_url}
+                    onChange={handleInputChange}
+                    maxLength={500}
+                    placeholder="https://example.com/image.jpg"
+                    className="w-full rounded-lg border p-3"
+                  />
+                </div>
+
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={form.is_featured}
+                    onChange={handleFeaturedChange}
+                    className="h-4 w-4"
+                  />
+                  Featured Project
                 </label>
-                <input
-                  id="title"
-                  name="title"
-                  value={form.title}
-                  onChange={handleInputChange}
-                  required
-                  maxLength={150}
-                  className="w-full rounded-lg border p-3"
-                />
-              </div>
 
-              <div>
-                <label htmlFor="slug" className="mb-1 block font-medium">
-                  Slug
-                </label>
-                <input
-                  id="slug"
-                  name="slug"
-                  value={form.slug}
-                  onChange={handleInputChange}
-                  required
-                  maxLength={180}
-                  className="w-full rounded-lg border p-3"
-                />
-                <p className="mt-1 text-sm text-gray-500">
-                  Example: my-portfolio-project
-                </p>
-              </div>
-
-              <div>
-                <label htmlFor="description" className="mb-1 block font-medium">
-                  Description
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={form.description}
-                  onChange={handleInputChange}
-                  required
-                  rows={5}
-                  className="w-full rounded-lg border p-3"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="tech_stack" className="mb-1 block font-medium">
-                  Technology Stack
-                </label>
-                <input
-                  id="tech_stack"
-                  name="tech_stack"
-                  value={form.tech_stack}
-                  onChange={handleInputChange}
-                  maxLength={500}
-                  placeholder="Next.js, FastAPI, PostgreSQL"
-                  className="w-full rounded-lg border p-3"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="project_url" className="mb-1 block font-medium">
-                  Project URL
-                </label>
-                <input
-                  id="project_url"
-                  name="project_url"
-                  type="url"
-                  value={form.project_url}
-                  onChange={handleInputChange}
-                  maxLength={500}
-                  placeholder="https://example.com"
-                  className="w-full rounded-lg border p-3"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="image_url" className="mb-1 block font-medium">
-                  Image URL
-                </label>
-                <input
-                  id="image_url"
-                  name="image_url"
-                  type="url"
-                  value={form.image_url}
-                  onChange={handleInputChange}
-                  maxLength={500}
-                  placeholder="https://example.com/image.jpg"
-                  className="w-full rounded-lg border p-3"
-                />
-              </div>
-
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={form.is_featured}
-                  onChange={handleFeaturedChange}
-                  className="h-4 w-4"
-                />
-                Featured Project
-              </label>
-
-              <div className="flex flex-wrap gap-3">
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {isSaving
-                    ? "Saving..."
-                    : editingProjectId !== null
-                      ? "Update Project"
-                      : "Create Project"}
-                </button>
-
-                {editingProjectId !== null && (
+                <div className="flex flex-wrap gap-3">
                   <button
-                    type="button"
-                    onClick={handleCancelEdit}
+                    type="submit"
                     disabled={isSaving}
-                    className="rounded-lg border px-6 py-3 hover:bg-gray-100"
+                    className="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700 disabled:opacity-50"
                   >
-                    Cancel
+                    {isSaving
+                      ? "Saving..."
+                      : editingProjectId !== null
+                        ? "Update Project"
+                        : "Create Project"}
                   </button>
-                )}
-              </div>
-            </form>
-          </section>
-        )}
 
-        
-        <section className="rounded-xl bg-white p-6 shadow-sm">
-          
-          {projects.length === 0 ? (
-            <p className="text-gray-500">No projects found.</p>
-          ) : (
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {projects.map((project) => (
-                <article
-                  key={project.id}
-                  className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-                >
-                  {/* Project image */}
-                  {project.image_url ? (
-                    <img
-                      src={project.image_url}
-                      alt={project.title}
-                      className="h-52 w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-52 items-center justify-center bg-slate-100 text-slate-400">
-                      No project image
-                    </div>
+                  {editingProjectId !== null && (
+                    <button
+                      type="button"
+                      onClick={handleCancelEdit}
+                      disabled={isSaving}
+                      className="rounded-lg border px-6 py-3 hover:bg-gray-100"
+                    >
+                      Cancel
+                    </button>
                   )}
+                </div>
+              </form>
+            </section>
 
-                  <div className="p-6">
-                    {project.is_featured && (
-                      <span className="mb-3 inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
-                        Featured Project
-                      </span>
-                    )}
-
-                    <h3 className="text-xl font-bold">
-                      {project.title}
-                    </h3>
-
-                    <p className="mt-3 line-clamp-3 leading-7 text-slate-600">
-                      {project.description}
-                    </p>
-
-                    {project.tech_stack && (
-                      <div className="mt-5 flex flex-wrap gap-2">
-                        {project.tech_stack
-                          .split(",")
-                          .map((technology) => technology.trim())
-                          .filter(Boolean)
-                          .map((technology) => (
-                            <span
-                              key={technology}
-                              className="rounded-md bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700"
-                            >
-                              {technology}
-                            </span>
-                          ))}
+          )}
+          
+          <section className="rounded-xl bg-white p-6 shadow-sm">
+            
+            {projects.length === 0 ? (
+              <p className="text-gray-500">No projects found.</p>
+            ) : (
+              <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                {projects.map((project) => (
+                  <article
+                    key={project.id}
+                    className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                  >
+                    {/* Project image */}
+                    {project.image_url ? (
+                      <img
+                        src={project.image_url}
+                        alt={project.title}
+                        className="h-52 w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-52 items-center justify-center bg-slate-100 text-slate-400">
+                        No project image
                       </div>
                     )}
 
-                    {project.project_url && (
-                      <a
-                        href={project.project_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-6 inline-block font-semibold text-blue-600 hover:text-blue-800"
-                      >
-                        View Project →
-                      </a>
-                    )}
+                    <div className="p-6">
+                      {project.is_featured && (
+                        <span className="mb-3 inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                          Featured Project
+                        </span>
+                      )}
 
-                    <div className="mt-6 flex flex-wrap gap-3 border-t border-slate-200 pt-4">
-                      <button
-                        type="button"
-                        onClick={() => handleEditProject(project)}
-                        className="rounded-lg bg-amber-500 px-4 py-2 text-white hover:bg-amber-600"
-                      >
-                        Edit
-                      </button>
+                      <h3 className="text-xl font-bold">
+                        {project.title}
+                      </h3>
 
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteProject(project)}
-                        disabled={isDeletingProjectId === project.id}
-                        className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
-                      >
-                        {isDeletingProjectId === project.id
-                          ? "Deleting..."
-                          : "Delete"}
-                      </button>
+                      <p className="mt-3 line-clamp-3 leading-7 text-slate-600">
+                        {project.description}
+                      </p>
+
+                      {project.tech_stack && (
+                        <div className="mt-5 flex flex-wrap gap-2">
+                          {project.tech_stack
+                            .split(",")
+                            .map((technology) => technology.trim())
+                            .filter(Boolean)
+                            .map((technology) => (
+                              <span
+                                key={technology}
+                                className="rounded-md bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700"
+                              >
+                                {technology}
+                              </span>
+                            ))}
+                        </div>
+                      )}
+
+                      {project.project_url && (
+                        <a
+                          href={project.project_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-6 inline-block font-semibold text-blue-600 hover:text-blue-800"
+                        >
+                          View Project →
+                        </a>
+                      )}
+
+                      <div className="mt-6 flex flex-wrap gap-3 border-t border-slate-200 pt-4">
+                        <button
+                          type="button"
+                          onClick={() => handleEditProject(project)}
+                          className="rounded-lg bg-amber-500 px-4 py-2 text-white hover:bg-amber-600"
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteProject(project)}
+                          disabled={isDeletingProjectId === project.id}
+                          className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
+                        >
+                          {isDeletingProjectId === project.id
+                            ? "Deleting..."
+                            : "Delete"}
+                        </button>
+                      </div>
+
+                      <p className="mt-3 text-xs text-gray-500">
+                        Created: {new Date(project.created_at).toLocaleDateString()}
+                      </p>
                     </div>
-
-                    <p className="mt-3 text-xs text-gray-500">
-                      Created: {new Date(project.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
         </section>
-
 
         
 
-        {/* Skills Management Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold">
-            Skills ({skills.length})
-          </h2>
+                {/* Skill Management Section */}
+        <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
 
-          <button
-            type="button"
-            onClick={handleCreateSkill}
-            className="rounded-lg bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-700"
-          >
-            + Create Skill
-          </button>
-        </div>
-
-        {/* Skill Form */}
-        {showSkillForm && (
-          <section className="mb-8 rounded-xl bg-white p-6 shadow-sm">
-            <h2 className="mb-5 text-xl font-semibold">
-              {editingSkillId !== null ? "Edit Skill" : "Create Skill"}
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-2xl font-bold">
+              Skills ({skills.length})
             </h2>
 
-            <form onSubmit={handleSubmitSkill} className="space-y-4">
-              <div>
-                <label htmlFor="skill-name" className="mb-1 block font-medium">
-                  Skill Name
-                </label>
-                <input
-                  id="skill-name"
-                  name="name"
-                  value={skillForm.name}
-                  onChange={handleSkillInputChange}
-                  required
-                  maxLength={100}
-                  placeholder="Python"
-                  className="w-full rounded-lg border p-3"
-                />
-              </div>
+            <button
+              type="button"
+              onClick={handleCreateSkill}
+              className="rounded-lg bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-700"
+            >
+              + Create Skill
+            </button>
+          </div>
 
-              <div>
-                <label htmlFor="skill-category" className="mb-1 block font-medium">
-                  Category
-                </label>
-                <input
-                  id="skill-category"
-                  name="category"
-                  value={skillForm.category}
-                  onChange={handleSkillInputChange}
-                  required
-                  maxLength={100}
-                  placeholder="Programming Languages"
-                  className="w-full rounded-lg border p-3"
-                />
-              </div>
+          {/* Skill Form */}
+          {showSkillForm && (
+            <section className="mb-8 rounded-xl bg-white p-6 shadow-sm">
+              <h2 className="mb-5 text-xl font-semibold">
+                {editingSkillId !== null ? "Edit Skill" : "Create Skill"}
+              </h2>
 
-              <div>
-                <label htmlFor="skill-proficiency" className="mb-1 block font-medium">
-                  Proficiency
-                </label>
-                <select
-                  id="skill-proficiency"
-                  name="proficiency"
-                  value={skillForm.proficiency}
-                  onChange={handleSkillInputChange}
-                  required
-                  className="w-full rounded-lg border p-3"
-                >
-                  <option value="Beginner">Beginner</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Advanced">Advanced</option>
-                  <option value="Expert">Expert</option>
-                </select>
-              </div>
+              <form onSubmit={handleSubmitSkill} className="space-y-4">
+                <div>
+                  <label htmlFor="skill-name" className="mb-1 block font-medium">
+                    Skill Name
+                  </label>
+                  <input
+                    id="skill-name"
+                    name="name"
+                    value={skillForm.name}
+                    onChange={handleSkillInputChange}
+                    required
+                    maxLength={100}
+                    placeholder="Python"
+                    className="w-full rounded-lg border p-3"
+                  />
+                </div>
 
-              <div className="flex flex-wrap gap-3">
-                <button
-                  type="submit"
-                  disabled={isSavingSkill}
-                  className="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {isSavingSkill
-                    ? "Saving..."
-                    : editingSkillId !== null
-                      ? "Update Skill"
-                      : "Create Skill"}
-                </button>
+                <div>
+                  <label htmlFor="skill-category" className="mb-1 block font-medium">
+                    Category
+                  </label>
+                  <input
+                    id="skill-category"
+                    name="category"
+                    value={skillForm.category}
+                    onChange={handleSkillInputChange}
+                    required
+                    maxLength={100}
+                    placeholder="Programming Languages"
+                    className="w-full rounded-lg border p-3"
+                  />
+                </div>
 
-                {editingSkillId !== null && (
-                  <button
-                    type="button"
-                    onClick={handleCancelSkillEdit}
-                    disabled={isSavingSkill}
-                    className="rounded-lg border px-6 py-3 hover:bg-gray-100"
+                <div>
+                  <label htmlFor="skill-proficiency" className="mb-1 block font-medium">
+                    Proficiency
+                  </label>
+                  <select
+                    id="skill-proficiency"
+                    name="proficiency"
+                    value={skillForm.proficiency}
+                    onChange={handleSkillInputChange}
+                    required
+                    className="w-full rounded-lg border p-3"
                   >
-                    Cancel
+                    <option value="Beginner">Beginner</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Advanced">Advanced</option>
+                    <option value="Expert">Expert</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="submit"
+                    disabled={isSavingSkill}
+                    className="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {isSavingSkill
+                      ? "Saving..."
+                      : editingSkillId !== null
+                        ? "Update Skill"
+                        : "Create Skill"}
                   </button>
-                )}
-              </div>
-            </form>
-          </section>
-        )}
 
-        {/* Skills List */}
-        <section className="mt-8 rounded-xl bg-white p-6 shadow-sm">
-          
-          {skills.length === 0 ? (
-            <p className="text-gray-500">No skills found.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left">
-                <thead>
-                  <tr className="border-b text-sm text-gray-600">
-                    <th className="p-3">Name</th>
-                    <th className="p-3">Category</th>
-                    <th className="p-3">Proficiency</th>
-                    <th className="p-3">Actions</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {skills.map((skill) => (
-                    <tr key={skill.id} className="border-b">
-                      <td className="p-3 font-medium">{skill.name}</td>
-                      <td className="p-3">{skill.category}</td>
-                      <td className="p-3">{skill.proficiency}</td>
-                      <td className="p-3">
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleEditSkill(skill)}
-                            className="rounded-lg bg-amber-500 px-4 py-2 text-white hover:bg-amber-600"
-                          >
-                            Edit
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteSkill(skill)}
-                            disabled={isDeletingSkillId === skill.id}
-                            className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
-                          >
-                            {isDeletingSkillId === skill.id
-                              ? "Deleting..."
-                              : "Delete"}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  {editingSkillId !== null && (
+                    <button
+                      type="button"
+                      onClick={handleCancelSkillEdit}
+                      disabled={isSavingSkill}
+                      className="rounded-lg border px-6 py-3 hover:bg-gray-100"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              </form>
+            </section>
           )}
+
+          {/* Skills List */}
+          <section className="mt-8 rounded-xl bg-white p-6 shadow-sm">
+            
+            {skills.length === 0 ? (
+              <p className="text-gray-500">No skills found.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-left">
+                  <thead>
+                    <tr className="border-b text-sm text-gray-600">
+                      <th className="p-3">Name</th>
+                      <th className="p-3">Category</th>
+                      <th className="p-3">Proficiency</th>
+                      <th className="p-3">Actions</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {skills.map((skill) => (
+                      <tr key={skill.id} className="border-b">
+                        <td className="p-3 font-medium">{skill.name}</td>
+                        <td className="p-3">{skill.category}</td>
+                        <td className="p-3">{skill.proficiency}</td>
+                        <td className="p-3">
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleEditSkill(skill)}
+                              className="rounded-lg bg-amber-500 px-4 py-2 text-white hover:bg-amber-600"
+                            >
+                              Edit
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteSkill(skill)}
+                              disabled={isDeletingSkillId === skill.id}
+                              className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
+                            >
+                              {isDeletingSkillId === skill.id
+                                ? "Deleting..."
+                                : "Delete"}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
         </section>
       </div>
     </main>
