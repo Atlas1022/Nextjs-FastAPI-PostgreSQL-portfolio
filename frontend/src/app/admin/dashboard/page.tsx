@@ -630,7 +630,7 @@ export default function AdminDashboard() {
             {projects.length === 0 ? (
               <p className="text-gray-500">No projects found.</p>
             ) : (
-              <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                 {projects.map((project) => (
                   <article
                     key={project.id}
