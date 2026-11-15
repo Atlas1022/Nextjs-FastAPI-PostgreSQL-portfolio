@@ -50,6 +50,9 @@ async def generate_ai_response(message: str) -> str:
             json=payload,
         )
 
+        if response.is_error:
+            print("OpenRouter Status:", response.status_code)
+            print("OpenRouter error:", response.text)
         response.raise_for_status()
 
         data = response.json()
