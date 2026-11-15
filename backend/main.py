@@ -1,10 +1,12 @@
-﻿
+﻿import httpx
+from ai_service import generate_ai_response
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Response
 
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from pydantic import BaseModel, Field
 
 from database import get_db, test_connection
 
@@ -56,6 +58,12 @@ session_serializer = URLSafeTimedSerializer(
 class AdminLoginRequest(BaseModel):
     username: str
     password: str
+
+class AIChatRequest(BaseModel):
+    message: str = Field(
+        min_length=1,
+        max_length=2000
+    )
 
 @app.get("/")
 def home():
@@ -476,3 +484,36 @@ def get_project(project_id: int, db: Session = Depends(get_db)):
         )
 
     return project
+
+# ==========================================
+# AI Chat API
+# ==========================================
+
+@app.post("/api/ai/chat")
+async def ai_chat(request: AIChatRequest):
+    try:
+        answer = await generate_ai_response(
+            request.message.strip()
+        )
+
+        return {
+            "answer": answer
+        }
+
+    except RuntimeError:
+        raise HTTPException(
+            status_code=503,
+            detail="AI service is not configured."
+        )
+
+    except httpx.HTTPError:
+        raise HTTPException(
+            status_code=502,
+            detail="Unable to communicate with the AI service."
+        )
+
+    except (KeyError, IndexError, TypeError):
+        raise HTTPException(
+            status_code=502,
+            detail="Invalid response from the AI service."
+        )
