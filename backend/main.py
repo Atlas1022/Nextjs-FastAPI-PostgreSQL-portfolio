@@ -489,8 +489,80 @@ def get_project(project_id: int, db: Session = Depends(get_db)):
 # AI Chat API
 # ==========================================
 
+
 @app.post("/api/ai/chat")
-async def ai_chat(request: AIChatRequest):
+async def ai_chat(
+    request: AIChatRequest,
+    db: Session = Depends(get_db),
+):
+    try:
+        # Retrieve public portfolio projects
+        projects = (
+            db.query(Project)
+            .order_by(
+                Project.is_featured.desc(),
+                Project.created_at.desc(),
+            )
+            .all()
+        )
+
+        # Retrieve public portfolio skills
+        skills = (
+            db.query(Skill)
+            .order_by(
+                Skill.category.asc(),
+                Skill.name.asc(),
+            )
+            .all()
+        )
+
+        # Prepare safe portfolio data for the AI
+        portfolio_context = {
+            "projects": [
+                {
+                    "title": project.title,
+                    "description": project.description,
+                    "tech_stack": project.tech_stack,
+                    "project_url": project.project_url,
+                    "is_featured": project.is_featured,
+                }
+                for project in projects
+            ],
+            "skills": [
+                {
+                    "name": skill.name,
+                    "category": skill.category,
+                    "proficiency": skill.proficiency,
+                }
+                for skill in skills
+            ],
+        }
+
+        answer = await generate_ai_response(
+            request.message.strip(),
+            portfolio_context,
+        )
+
+        return {"answer": answer}
+
+    except RuntimeError:
+        raise HTTPException(
+            status_code=503,
+            detail="AI service is not configured.",
+        )
+
+    except httpx.HTTPError:
+        raise HTTPException(
+            status_code=502,
+            detail="Unable to communicate with the AI service.",
+        )
+
+    except (KeyError, IndexError, TypeError):
+        raise HTTPException(
+            status_code=502,
+            detail="Invalid response from the AI service.",
+        )
+
     try:
         answer = await generate_ai_response(
             request.message.strip()
