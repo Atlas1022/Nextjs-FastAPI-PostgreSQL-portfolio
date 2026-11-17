@@ -3,6 +3,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "@/lib/api";
+import ReactMarkdown from "react-markdown";
 
 type Message = {
   role: "assistant" | "user";
@@ -119,13 +120,21 @@ export default function AIChat() {
                 }`}
               >
                 <div
-                  className={`max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-sm leading-6 ${
+                  className={`max-w-[85%] break-words rounded-2xl px-4 py-3 text-sm leading-6 ${
                     message.role === "user"
-                      ? "bg-sky-500 text-slate-950"
+                      ? "whitespace-pre-wrap bg-sky-500 text-slate-950"
                       : "bg-slate-800 text-slate-200"
                   }`}
                 >
-                  {message.content}
+                  {message.role === "assistant" ? (
+                    <div className="space-y-2 [&_h1]:text-base [&_h1]:font-bold [&_h2]:text-sm [&_h2]:font-bold [&_h3]:font-semibold [&_li]:ml-4 [&_li]:list-disc [&_ol_li]:list-decimal [&_p]:mb-2 [&_strong]:font-bold [&_ul]:space-y-1 [&_a]:text-sky-400 [&_a]:underline">
+                      <ReactMarkdown>
+                        {message.content}
+                      </ReactMarkdown>
+                    </div>
+                  ) : (
+                    message.content
+                  )}
                 </div>
               </div>
             ))}
