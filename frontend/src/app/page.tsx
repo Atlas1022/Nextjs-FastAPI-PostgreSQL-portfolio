@@ -1,4 +1,5 @@
 export const instant = false;
+import AIChat from "@/components/AIChat";
 
 type Project = {
   id: number;
@@ -336,6 +337,8 @@ export default async function Home() {
       <footer className="bg-slate-950 px-6 py-6 text-center text-sm text-slate-400">
         © {new Date().getFullYear()} My Portfolio. All rights reserved.
       </footer>
+      {/* AI Chat Assistant */}
+      <AIChat />
     </main>
   );
 }
