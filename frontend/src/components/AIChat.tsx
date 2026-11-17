@@ -14,6 +14,12 @@ type ChatResponse = {
   answer: string;
 };
 
+const WELCOME_MESSAGE: Message = {
+  role: "assistant",
+  content:
+    "Hello! I'm your portfolio AI assistant. Ask me about projects, technical skills, or technologies.",
+};
+
 export default function AIChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
@@ -21,14 +27,18 @@ export default function AIChat() {
   const [error, setError] = useState("");
 
   const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content:
-        "Hello! I'm your portfolio AI assistant. Ask me about projects, technical skills, or technologies.",
-    },
+    WELCOME_MESSAGE,
   ]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  function handleClearChat() {
+    if (loading) return;
+
+    setMessages([WELCOME_MESSAGE]);
+    setInput("");
+    setError("");
+  }
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
@@ -87,24 +97,34 @@ export default function AIChat() {
           {/* Chat header */}
           <div className="flex items-center justify-between border-b border-slate-700 bg-[#17243a] p-4">
             <div>
-              <h2 className="font-semibold text-white">
+                <h2 className="font-semibold text-white">
                 Portfolio AI Assistant
-              </h2>
-              <p className="mt-1 text-xs text-sky-400">
+                </h2>
+                <p className="mt-1 text-xs text-sky-400">
                 Ask me anything about this portfolio
-              </p>
+                </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setIsOpen(false)}
-              aria-label="Close chat"
-              className="rounded-lg px-3 py-1 text-xl text-slate-400 transition hover:bg-slate-700 hover:text-white"
-            >
-              ×
-            </button>
-          </div>
+            <div className="flex items-center gap-2">
+                <button
+                type="button"
+                onClick={handleClearChat}
+                disabled={loading}
+                className="rounded-lg px-2 py-1 text-xs text-slate-400 transition hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                Clear
+                </button>
 
+                <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                aria-label="Close chat"
+                className="rounded-lg px-3 py-1 text-xl text-slate-400 transition hover:bg-slate-700 hover:text-white"
+                >
+                ×
+                </button>
+            </div>
+          </div>
           {/* Messages */}
           <div
             className="flex-1 space-y-4 overflow-y-auto p-4"
