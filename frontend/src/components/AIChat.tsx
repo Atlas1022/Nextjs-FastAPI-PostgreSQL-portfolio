@@ -19,6 +19,11 @@ const WELCOME_MESSAGE: Message = {
     content:
         "Hello! I'm your portfolio AI assistant. Ask me about projects, technical skills, or technologies.",
 };
+const SUGGESTED_QUESTIONS = [
+    "What projects has the developer built?",
+    "What technologies does the developer use?",
+    "What are the developer's technical skills?",
+];
 
 export default function AIChat() {
     const [isOpen, setIsOpen] = useState(false);
@@ -176,7 +181,28 @@ export default function AIChat() {
                                 </div>
                             </div>
                         ))}
+                        {/* Suggested questions */}
+                        {messages.length === 1 &&
+                            messages[0].role === "assistant" &&
+                            !loading && (
+                                <div className="space-y-2">
+                                    <p className="text-xs font-medium text-slate-400">
+                                        Suggested questions
+                                    </p>
 
+                                    {SUGGESTED_QUESTIONS.map((question) => (
+                                        <button
+                                            key={question}
+                                            type="button"
+                                            onClick={() => sendMessage(question)}
+                                            disabled={loading}
+                                            className="block w-full rounded-xl border border-slate-700 bg-[#17243a] px-3 py-2 text-left text-xs text-slate-300 transition hover:border-sky-400 hover:bg-slate-800 hover:text-white disabled:opacity-50"
+                                        >
+                                            {question}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         {loading && (
                             <div className="flex justify-start">
                                 <div
