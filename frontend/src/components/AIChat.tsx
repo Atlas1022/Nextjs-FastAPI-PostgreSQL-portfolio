@@ -25,6 +25,7 @@ export default function AIChat() {
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [failedMessage, setFailedMessage] = useState("");
 
     const [messages, setMessages] = useState<Message[]>([
         WELCOME_MESSAGE,
@@ -38,6 +39,7 @@ export default function AIChat() {
         setMessages([WELCOME_MESSAGE]);
         setInput("");
         setError("");
+        setFailedMessage("");
     }
 
     useEffect(() => {
@@ -46,53 +48,71 @@ export default function AIChat() {
         });
     }, [messages, loading]);
 
-  async function handleSubmit(
-    event: React.FormEvent<HTMLFormElement>
-  ) {
-    event.preventDefault();
+    async function sendMessage(message: string) {
+        if (!message || loading) return;
 
-    const message = input.trim();
+        setInput("");
+        setError("");
+        setFailedMessage("");
+        setLoading(true);
 
-    if (!message || loading) return;
+        setMessages((previous) => [
+            ...previous,
+            {
+                role: "user",
+                content: message,
+            },
+        ]);
 
-    setInput("");
-    setError("");
-    setLoading(true);
+        try {
+            const data = (await apiFetch("/api/ai/chat", {
+                method: "POST",
+                body: JSON.stringify({ message }),
+            })) as ChatResponse;
 
-    setMessages((previous) => [
-      ...previous,
-      {
-        role: "user",
-        content: message,
-      },
-    ]);
+            setMessages((previous) => [
+                ...previous,
+                {
+                    role: "assistant",
+                    content: data.answer,
+                },
+            ]);
+        } catch (err) {
+            console.error("AI chat error:", err);
 
-    try {
-      const data = (await apiFetch("/api/ai/chat", {
-        method: "POST",
-        body: JSON.stringify({ message }),
-      })) as ChatResponse;
-
-      setMessages((previous) => [
-        ...previous,
-        {
-          role: "assistant",
-          content: data.answer,
-        },
-      ]);
-    } catch (err) {
-      console.error("AI chat error:", err);
-      setError(
-        "Unable to get a response. Please try again."
-      );
-    } finally {
-      setLoading(false);
+            setFailedMessage(message);
+            setError(
+                "Unable to get a response. Please check your connection and try again."
+            );
+        } finally {
+            setLoading(false);
+        }
     }
-  }
 
-  return (
-    <div className="fixed bottom-6 right-6 z-[100]">
-      {isOpen && (
+    async function handleSubmit(
+        event: React.FormEvent<HTMLFormElement>
+    ) {
+        event.preventDefault();
+
+        const message = input.trim();
+
+        if (!message || loading) return;
+
+        await sendMessage(message);
+    }
+
+    async function handleRetry() {
+        if (!failedMessage || loading) return;
+
+        const message = failedMessage;
+
+        setMessages((previous) => previous.slice(0, -1));
+
+        await sendMessage(message);
+    }
+    return (
+        <div className="fixed bottom-6 right-6 z-[100]">
+            {isOpen && (
                 <div className="mb-4 flex h-[500px] w-[calc(100vw-3rem)] max-w-[380px] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-[#111c30] shadow-2xl">
                     {/* Chat header */}
                     <div className="flex items-center justify-between border-b border-slate-700 bg-[#17243a] p-4">
@@ -134,14 +154,14 @@ export default function AIChat() {
                             <div
                                 key={index}
                                 className={`flex ${message.role === "user"
-                                        ? "justify-end"
-                                        : "justify-start"
+                                    ? "justify-end"
+                                    : "justify-start"
                                     }`}
                             >
                                 <div
                                     className={`max-w-[85%] break-words rounded-2xl px-4 py-3 text-sm leading-6 ${message.role === "user"
-                                            ? "whitespace-pre-wrap bg-sky-500 text-slate-950"
-                                            : "bg-slate-800 text-slate-200"
+                                        ? "whitespace-pre-wrap bg-sky-500 text-slate-950"
+                                        : "bg-slate-800 text-slate-200"
                                         }`}
                                 >
                                     {message.role === "assistant" ? (
@@ -180,10 +200,22 @@ export default function AIChat() {
                     </div>
 
                     {/* Error message */}
+                    {/* Error message and retry button */}
                     {error && (
-                        <p className="px-4 pb-2 text-sm text-red-400">
-                            {error}
-                        </p>
+                        <div className="flex items-center justify-between gap-3 px-4 pb-3">
+                            <p className="text-xs text-red-400">
+                                {error}
+                            </p>
+
+                            <button
+                                type="button"
+                                onClick={handleRetry}
+                                disabled={loading}
+                                className="shrink-0 rounded-lg bg-slate-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-600 disabled:opacity-50"
+                            >
+                                Retry
+                            </button>
+                        </div>
                     )}
 
                     {/* Message input */}
