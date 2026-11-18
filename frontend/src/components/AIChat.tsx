@@ -24,6 +24,7 @@ const SUGGESTED_QUESTIONS = [
     "What technologies does the developer use?",
     "What are the developer's technical skills?",
 ];
+const CHAT_STORAGE_KEY = "portfolio-ai-chat-history";
 
 export default function AIChat() {
     const [isOpen, setIsOpen] = useState(false);
@@ -31,13 +32,51 @@ export default function AIChat() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [failedMessage, setFailedMessage] = useState("");
-
+    const [historyLoaded, setHistoryLoaded] = useState(false);
     const [messages, setMessages] = useState<Message[]>([
         WELCOME_MESSAGE,
     ]);
-
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    // Restore conversation history from sessionStorage
+    useEffect(() => {
+        try {
+            const savedMessages = sessionStorage.getItem(CHAT_STORAGE_KEY);
 
+            if (savedMessages) {
+                const parsedMessages: unknown = JSON.parse(savedMessages);
+
+                if (
+                    Array.isArray(parsedMessages) &&
+                    parsedMessages.length > 0 &&
+                    parsedMessages.every(
+                        (message) =>
+                            message &&
+                            typeof message === "object" &&
+                            ["assistant", "user"].includes(message.role) &&
+                            typeof message.content === "string"
+                    )
+                ) {
+                    setMessages(parsedMessages as Message[]);
+                }
+            }
+        } catch (err) {
+            console.error("Unable to restore chat history:", err);
+            sessionStorage.removeItem(CHAT_STORAGE_KEY);
+        }
+        setHistoryLoaded(true);
+    }, []);
+    useEffect(() => {
+        if (!historyLoaded) return;
+
+        if (messages.length > 1) {
+            sessionStorage.setItem(
+                CHAT_STORAGE_KEY,
+                JSON.stringify(messages)
+            );
+        } else {
+            sessionStorage.removeItem(CHAT_STORAGE_KEY);
+        }
+    }, [messages, historyLoaded]);
     function handleClearChat() {
         if (loading) return;
 
