@@ -26,6 +26,29 @@ const SUGGESTED_QUESTIONS = [
     "What technologies does the developer use?",
     "What are the developer's technical skills?",
 ];
+function getDateLabel(timestamp: string): string {
+    const messageDate = new Date(timestamp);
+    const today = new Date();
+
+    const isToday =
+        messageDate.toDateString() === today.toDateString();
+
+    if (isToday) return "Today";
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const isYesterday =
+        messageDate.toDateString() === yesterday.toDateString();
+
+    if (isYesterday) return "Yesterday";
+
+    return messageDate.toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+    });
+}
 const CHAT_STORAGE_KEY = "portfolio-ai-chat-history";
 
 export default function AIChat() {
@@ -207,40 +230,57 @@ export default function AIChat() {
                         className="flex-1 space-y-4 overflow-y-auto p-4"
                         aria-live="polite"
                     >
+
                         {messages.map((message, index) => (
-                            <div
-                                key={index}
-                                className={`flex ${message.role === "user"
-                                    ? "justify-end"
-                                    : "justify-start"
-                                    }`}
-                            >
+                            <div key={index} className="flex flex-col">
+                                {/* Date separator */}
+                                {(index === 0 ||
+                                    getDateLabel(message.timestamp) !==
+                                    getDateLabel(messages[index - 1].timestamp)) && (
+                                        <div className="w-full py-3 text-center">
+                                            <span className="rounded-full bg-slate-800 px-3 py-1 text-[10px] font-medium text-slate-400">
+                                                {getDateLabel(message.timestamp)}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                {/* Message alignment */}
                                 <div
-                                    className={`max-w-[85%] break-words rounded-2xl px-4 py-3 text-sm leading-6 ${message.role === "user"
-                                        ? "whitespace-pre-wrap bg-sky-500 text-slate-950"
-                                        : "bg-slate-800 text-slate-200"
+                                    className={`flex ${message.role === "user"
+                                            ? "justify-end"
+                                            : "justify-start"
                                         }`}
                                 >
-                                    {message.role === "assistant" ? (
-                                        <div className="space-y-2 [&_h1]:text-base [&_h1]:font-bold [&_h2]:text-sm [&_h2]:font-bold [&_h3]:font-semibold [&_li]:ml-4 [&_li]:list-disc [&_ol_li]:list-decimal [&_p]:mb-2 [&_strong]:font-bold [&_ul]:space-y-1 [&_a]:text-sky-400 [&_a]:underline">
-                                            <ReactMarkdown>
-                                                {message.content}
-                                            </ReactMarkdown>
-                                        </div>
-                                    ) : (
-                                        message.content
-                                    )}
-                                    <p
-                                        className={`mt-2 text-[10px] leading-4 ${message.role === "user"
-                                                ? "text-slate-950/60"
-                                                : "text-slate-400"
+                                    {/* Message bubble */}
+                                    <div
+                                        className={`max-w-[85%] break-words rounded-2xl px-4 py-3 text-sm leading-6 ${message.role === "user"
+                                                ? "whitespace-pre-wrap bg-sky-500 text-slate-950"
+                                                : "bg-slate-800 text-slate-200"
                                             }`}
                                     >
-                                        {new Date(message.timestamp).toLocaleTimeString([], {
-                                            hour: "2-digit",
-                                            minute: "2-digit",
-                                        })}
-                                    </p>
+                                        {message.role === "assistant" ? (
+                                            <div className="space-y-2 [&_h1]:text-base [&_h1]:font-bold [&_h2]:text-sm [&_h2]:font-bold [&_h3]:font-semibold [&_li]:ml-4 [&_li]:list-disc [&_ol_li]:list-decimal [&_p]:mb-2 [&_strong]:font-bold [&_ul]:space-y-1 [&_a]:text-sky-400 [&_a]:underline">
+                                                <ReactMarkdown>
+                                                    {message.content}
+                                                </ReactMarkdown>
+                                            </div>
+                                        ) : (
+                                            message.content
+                                        )}
+
+                                        {/* Message timestamp */}
+                                        <p
+                                            className={`mt-2 text-[10px] leading-4 ${message.role === "user"
+                                                    ? "text-slate-950/60"
+                                                    : "text-slate-400"
+                                                }`}
+                                        >
+                                            {new Date(message.timestamp).toLocaleTimeString([], {
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                            })}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         ))}
