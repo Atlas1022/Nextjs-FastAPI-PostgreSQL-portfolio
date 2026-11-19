@@ -8,6 +8,7 @@ import ReactMarkdown from "react-markdown";
 type Message = {
     role: "assistant" | "user";
     content: string;
+    timestamp: string;
 };
 
 type ChatResponse = {
@@ -18,6 +19,7 @@ const WELCOME_MESSAGE: Message = {
     role: "assistant",
     content:
         "Hello! I'm your portfolio AI assistant. Ask me about projects, technical skills, or technologies.",
+    timestamp: new Date().toISOString(),
 };
 const SUGGESTED_QUESTIONS = [
     "What projects has the developer built?",
@@ -56,7 +58,17 @@ export default function AIChat() {
                             typeof message.content === "string"
                     )
                 ) {
-                    setMessages(parsedMessages as Message[]);
+                    const restoredMessages = parsedMessages as Message[];
+
+                    setMessages(
+                        restoredMessages.map((message) => ({
+                            ...message,
+                            timestamp:
+                                typeof message.timestamp === "string"
+                                    ? message.timestamp
+                                    : new Date().toISOString(),
+                        }))
+                    );
                 }
             }
         } catch (err) {
@@ -105,9 +117,9 @@ export default function AIChat() {
             {
                 role: "user",
                 content: message,
+                timestamp: new Date().toISOString(),
             },
         ]);
-
         try {
             const data = (await apiFetch("/api/ai/chat", {
                 method: "POST",
@@ -119,6 +131,7 @@ export default function AIChat() {
                 {
                     role: "assistant",
                     content: data.answer,
+                    timestamp: new Date().toISOString(),
                 },
             ]);
         } catch (err) {
@@ -217,6 +230,17 @@ export default function AIChat() {
                                     ) : (
                                         message.content
                                     )}
+                                    <p
+                                        className={`mt-2 text-[10px] leading-4 ${message.role === "user"
+                                                ? "text-slate-950/60"
+                                                : "text-slate-400"
+                                            }`}
+                                    >
+                                        {new Date(message.timestamp).toLocaleTimeString([], {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                        })}
+                                    </p>
                                 </div>
                             </div>
                         ))}
