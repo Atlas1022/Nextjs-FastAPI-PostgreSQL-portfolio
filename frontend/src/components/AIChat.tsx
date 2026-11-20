@@ -247,15 +247,15 @@ export default function AIChat() {
                                 {/* Message alignment */}
                                 <div
                                     className={`flex ${message.role === "user"
-                                            ? "justify-end"
-                                            : "justify-start"
+                                        ? "justify-end"
+                                        : "justify-start"
                                         }`}
                                 >
                                     {/* Message bubble */}
                                     <div
                                         className={`max-w-[85%] break-words rounded-2xl px-4 py-3 text-sm leading-6 ${message.role === "user"
-                                                ? "whitespace-pre-wrap bg-sky-500 text-slate-950"
-                                                : "bg-slate-800 text-slate-200"
+                                            ? "whitespace-pre-wrap bg-sky-500 text-slate-950"
+                                            : "bg-slate-800 text-slate-200"
                                             }`}
                                     >
                                         {message.role === "assistant" ? (
@@ -271,8 +271,8 @@ export default function AIChat() {
                                         {/* Message timestamp */}
                                         <p
                                             className={`mt-2 text-[10px] leading-4 ${message.role === "user"
-                                                    ? "text-slate-950/60"
-                                                    : "text-slate-400"
+                                                ? "text-slate-950/60"
+                                                : "text-slate-400"
                                                 }`}
                                         >
                                             {new Date(message.timestamp).toLocaleTimeString([], {
@@ -306,25 +306,26 @@ export default function AIChat() {
                                     ))}
                                 </div>
                             )}
-                        {loading && (
-                            <div className="flex justify-start">
-                                <div
-                                    className="flex items-center gap-2 rounded-2xl bg-slate-800 px-4 py-3"
-                                    role="status"
-                                    aria-label="AI assistant is thinking"
-                                >
-                                    <span className="text-xs text-slate-400">
-                                        Thinking
-                                    </span>
 
-                                    <div className="flex items-center gap-1">
-                                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-sky-400 [animation-delay:-0.3s]" />
-                                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-sky-400 [animation-delay:-0.15s]" />
-                                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-sky-400" />
-                                    </div>
+                        {loading && (
+                            <div className="flex items-end gap-2" role="status">
+                                {/* AI avatar */}
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-500 text-xs font-bold text-slate-950">
+                                    AI
+                                </div>
+
+                                {/* Typing bubble */}
+                                <div
+                                    className="flex items-center gap-1.5 rounded-2xl rounded-bl-md bg-slate-800 px-4 py-3"
+                                    aria-label="AI assistant is typing"
+                                >
+                                    <span className="h-2 w-2 animate-bounce rounded-full bg-sky-400 [animation-delay:-0.3s]" />
+                                    <span className="h-2 w-2 animate-bounce rounded-full bg-sky-400 [animation-delay:-0.15s]" />
+                                    <span className="h-2 w-2 animate-bounce rounded-full bg-sky-400" />
                                 </div>
                             </div>
                         )}
+
                         <div ref={messagesEndRef} />
                     </div>
 
