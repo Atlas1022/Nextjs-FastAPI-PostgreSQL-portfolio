@@ -55,6 +55,7 @@ export default function AIChat() {
     const [isOpen, setIsOpen] = useState(false);
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
+    const [copiedMessageIndex, setCopiedMessageIndex] = useState<number | null>(null);
     const [error, setError] = useState("");
     const [failedMessage, setFailedMessage] = useState("");
     const [historyLoaded, setHistoryLoaded] = useState(false);
@@ -112,6 +113,21 @@ export default function AIChat() {
             sessionStorage.removeItem(CHAT_STORAGE_KEY);
         }
     }, [messages, historyLoaded]);
+    async function handleCopyMessage(
+        content: string,
+        index: number
+    ) {
+        try {
+            await navigator.clipboard.writeText(content);
+            setCopiedMessageIndex(index);
+
+            window.setTimeout(() => {
+                setCopiedMessageIndex(null);
+            }, 2000);
+        } catch (error) {
+            console.error("Unable to copy message:", error);
+        }
+    }
     function handleClearChat() {
         if (loading) return;
 
@@ -280,6 +296,18 @@ export default function AIChat() {
                                                 minute: "2-digit",
                                             })}
                                         </p>
+                                        {message.role === "assistant" && (
+                                            <div className="mt-2 flex justify-end">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleCopyMessage(message.content, index)}
+                                                    className="rounded-md px-2 py-1 text-xs text-slate-400 transition hover:bg-slate-700 hover:text-sky-400"
+                                                    aria-label="Copy AI response"
+                                                >
+                                                    {copiedMessageIndex === index ? "✓ Copied" : "Copy"}
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
