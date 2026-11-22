@@ -39,3 +39,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Python virtual environment
+.venv/
+
+# Other Python cache directories
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
