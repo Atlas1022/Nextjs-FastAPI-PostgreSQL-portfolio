@@ -105,3 +105,30 @@ class AdminUser(Base):
         server_default=func.now(),
         nullable=False
     )
+
+class SiteSetting(Base):
+    __tablename__ = "site_settings"
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True
+    )
+
+    key: Mapped[str] = mapped_column(
+        String(100),
+        unique=True,
+        nullable=False,
+        index=True
+    )
+
+    value: Mapped[str] = mapped_column(
+        String(500),
+        nullable=False
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False
+    )
