@@ -21,7 +21,7 @@ from schemas import (
 
 from pydantic import BaseModel
 
-from models import Project, AdminUser, Skill
+from models import Project, AdminUser, Skill, SiteSetting
 
 from auth import (
     verify_admin_password,
@@ -296,6 +296,21 @@ def admin_logout(response: Response):
     return {
         "message": "Administrator logout successful."
     }
+
+# Public endpoint: retrieve contact email
+@app.get("/api/contact/email")
+def get_contact_email(db: Session = Depends(get_db)):
+    setting = db.query(SiteSetting).filter(
+        SiteSetting.key == "contact_email"
+    ).first()
+
+    if setting is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Contact email is not configured."
+        )
+
+    return {"email": setting.value}
 
 # ==========================================
 # Skills API
