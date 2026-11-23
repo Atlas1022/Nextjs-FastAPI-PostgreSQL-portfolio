@@ -119,3 +119,20 @@ class SkillResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+# Request schema: submit a contact form message
+class ContactRequest(BaseModel):
+    name: str = Field(min_length=2, max_length=100)
+    email: str = Field(min_length=5, max_length=254)
+    subject: str = Field(min_length=3, max_length=150)
+    message: str = Field(min_length=10, max_length=5000)
+
+    @model_validator(mode="after")
+    def validate_contact_fields(self):
+        for field in ("name", "email", "subject", "message"):
+            value = getattr(self, field)
+
+            if not value.strip():
+                raise ValueError(f"{field} cannot be empty.")
+
+        return self

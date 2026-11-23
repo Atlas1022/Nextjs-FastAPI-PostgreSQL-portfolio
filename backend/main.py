@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 
 from database import get_db, test_connection
+from email_service import send_contact_email
 
 from schemas import (
     ProjectCreate,
@@ -17,6 +18,7 @@ from schemas import (
     SkillCreate,
     SkillUpdate,
     SkillResponse,
+    ContactRequest,
 )
 
 from pydantic import BaseModel
@@ -499,6 +501,49 @@ def get_project(project_id: int, db: Session = Depends(get_db)):
         )
 
     return project
+
+
+# ==========================================
+# Contact API
+# ==========================================
+
+# Public endpoint: submit a contact form message
+@app.post("/api/contact", status_code=200)
+def submit_contact_message(
+    contact_data: ContactRequest,
+    db: Session = Depends(get_db),
+):
+    # Retrieve the recipient email from Neon PostgreSQL
+    setting = db.query(SiteSetting).filter(
+        SiteSetting.key == "contact_email"
+    ).first()
+
+    if setting is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Contact email is not configured.",
+        )
+
+    try:
+        # Send the contact message through Resend
+        send_contact_email(
+            name=contact_data.name.strip(),
+            email=contact_data.email.strip(),
+            subject=contact_data.subject.strip(),
+            message=contact_data.message.strip(),
+            recipient=setting.value,
+        )
+
+        return {
+            "message": "Your message has been sent successfully."
+        }
+
+    except Exception:
+        raise HTTPException(
+            status_code=502,
+            detail="Unable to send your message. Please try again later.",
+        )
+
 
 # ==========================================
 # AI Chat API
