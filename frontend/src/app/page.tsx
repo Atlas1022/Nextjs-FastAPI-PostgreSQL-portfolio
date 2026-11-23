@@ -1,5 +1,6 @@
 export const instant = false;
 import AIChat from "@/components/AIChat";
+import ContactForm from "@/components/ContactForm";
 
 type Project = {
   id: number;
@@ -323,15 +324,7 @@ export default async function Home() {
       </section>
 
       {/* Contact section */}
-      <section id="contact" className="bg-slate-900 text-white">
-        <div className="mx-auto max-w-6xl px-6 py-16">
-          <h2 className="text-3xl font-bold">Let's Work Together</h2>
-
-          <p className="mt-4 text-slate-300">
-            Interested in working together? Feel free to get in touch.
-          </p>
-        </div>
-      </section>
+      <ContactForm />
 
       {/* Footer */}
       <footer className="bg-slate-950 px-6 py-6 text-center text-sm text-slate-400">
