@@ -1,8 +1,7 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
-
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 # Request schema: create a project
 class ProjectCreate(BaseModel):
@@ -123,7 +122,7 @@ class SkillResponse(BaseModel):
 # Request schema: submit a contact form message
 class ContactRequest(BaseModel):
     name: str = Field(min_length=2, max_length=100)
-    email: str = Field(min_length=5, max_length=254)
+    email: EmailStr
     subject: str = Field(min_length=3, max_length=150)
     message: str = Field(min_length=10, max_length=5000)
 
@@ -136,3 +135,4 @@ class ContactRequest(BaseModel):
                 raise ValueError(f"{field} cannot be empty.")
 
         return self
+    
