@@ -522,6 +522,25 @@ def submit_contact_message(
     contact_data: ContactRequest,
     db: Session = Depends(get_db),
 ):
+    # Honeypot spam protection
+    if contact_data.website.strip():
+        return {
+            "message": "Your message has been sent successfully."
+        }
+
+    # Retrieve the recipient email from Neon PostgreSQL
+    setting = db.query(SiteSetting).filter(
+        SiteSetting.key == "contact_email"
+    ).first()
+
+    if setting is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Contact email is not configured.",
+        )
+
+    # Keep the rest of your existing endpoint unchanged.
+  
     # Retrieve the recipient email from Neon PostgreSQL
     setting = db.query(SiteSetting).filter(
         SiteSetting.key == "contact_email"

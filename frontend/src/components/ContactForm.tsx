@@ -14,6 +14,7 @@ type ContactFormData = {
   email: string;
   subject: string;
   message: string;
+  website: string;
 };
 
 type ContactEmailResponse = {
@@ -30,6 +31,7 @@ const initialFormData: ContactFormData = {
   email: "",
   subject: "",
   message: "",
+  website: "",
 };
 
 export default function ContactForm() {
@@ -92,6 +94,7 @@ export default function ContactForm() {
           email: formData.email.trim(),
           subject: formData.subject.trim(),
           message: formData.message.trim(),
+          website: formData.website.trim(), // Include the honeypot field in the request
         }),
       });
 
@@ -180,6 +183,25 @@ export default function ContactForm() {
             onSubmit={handleSubmit}
             className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 shadow-2xl sm:p-8"
           >
+            {/* Honeypot field for spam protection */}
+            <div
+              aria-hidden="true"
+              className="absolute -left-[9999px] h-px w-px overflow-hidden"
+            >
+              <label htmlFor="contact-website">
+                Leave this field empty
+              </label>
+
+              <input
+                id="contact-website"
+                name="website"
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                value={formData.website}
+                onChange={handleChange}
+              />
+            </div>
             <div className="grid gap-5 sm:grid-cols-2">
               <div>
                 <label
@@ -275,11 +297,10 @@ export default function ContactForm() {
               <p
                 role="status"
                 aria-live="polite"
-                className={`mt-5 rounded-lg border p-3 text-sm ${
-                  status.type === "success"
+                className={`mt-5 rounded-lg border p-3 text-sm ${status.type === "success"
                     ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
                     : "border-red-500/30 bg-red-500/10 text-red-300"
-                }`}
+                  }`}
               >
                 {status.message}
               </p>
