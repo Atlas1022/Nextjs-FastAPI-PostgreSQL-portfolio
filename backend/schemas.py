@@ -125,6 +125,7 @@ class ContactRequest(BaseModel):
     email: EmailStr
     subject: str = Field(min_length=3, max_length=150)
     message: str = Field(min_length=10, max_length=5000)
+    website: str = Field(default="", max_length=200)
 
     @model_validator(mode="after")
     def validate_contact_fields(self):
