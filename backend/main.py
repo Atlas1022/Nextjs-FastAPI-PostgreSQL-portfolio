@@ -1,15 +1,21 @@
 ﻿import httpx
-from ai_service import generate_ai_response
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Response
+
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
+from itsdangerous import URLSafeTimedSerializer
 
 from database import get_db, test_connection
 from email_service import send_contact_email
+from models import Project, AdminUser, Skill, SiteSetting
+from ai_service import generate_ai_response
 
 from schemas import (
     ProjectCreate,
@@ -21,10 +27,6 @@ from schemas import (
     ContactRequest,
 )
 
-from pydantic import BaseModel
-
-from models import Project, AdminUser, Skill, SiteSetting
-
 from auth import (
     verify_admin_password,
     get_current_admin,
@@ -33,10 +35,16 @@ from auth import (
     SESSION_MAX_AGE,
 )
 
-from itsdangerous import URLSafeTimedSerializer
-
+# Rate limiting configuration
+limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(title="Portfolio API")
+
+app.state.limiter = limiter
+app.add_exception_handler(
+    RateLimitExceeded,
+    _rate_limit_exceeded_handler,
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -54,7 +62,6 @@ session_serializer = URLSafeTimedSerializer(
     SESSION_SECRET_KEY,
     salt="portfolio-admin-session"
 )
-
 
 # Login request schema
 class AdminLoginRequest(BaseModel):
@@ -509,7 +516,9 @@ def get_project(project_id: int, db: Session = Depends(get_db)):
 
 # Public endpoint: submit a contact form message
 @app.post("/api/contact", status_code=200)
+@limiter.limit("5/minute")
 def submit_contact_message(
+    request: Request,
     contact_data: ContactRequest,
     db: Session = Depends(get_db),
 ):
