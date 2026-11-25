@@ -541,7 +541,7 @@ def submit_contact_message(
 
     try:
         # Send the contact message through Resend
-        email_result = send_contact_email(
+        send_contact_email(
             name=contact_data.name.strip(),
             email=contact_data.email.strip(),
             subject=contact_data.subject.strip(),
@@ -549,7 +549,6 @@ def submit_contact_message(
             recipient=setting.value,
         )
 
-        print("RESEND RESPONSE:", email_result)
 
         return {
             "message": "Your message has been sent successfully."
