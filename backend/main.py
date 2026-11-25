@@ -539,28 +539,17 @@ def submit_contact_message(
             detail="Contact email is not configured.",
         )
 
-    # Keep the rest of your existing endpoint unchanged.
-  
-    # Retrieve the recipient email from Neon PostgreSQL
-    setting = db.query(SiteSetting).filter(
-        SiteSetting.key == "contact_email"
-    ).first()
-
-    if setting is None:
-        raise HTTPException(
-            status_code=503,
-            detail="Contact email is not configured.",
-        )
-
     try:
         # Send the contact message through Resend
-        send_contact_email(
+        email_result = send_contact_email(
             name=contact_data.name.strip(),
             email=contact_data.email.strip(),
             subject=contact_data.subject.strip(),
             message=contact_data.message.strip(),
             recipient=setting.value,
         )
+
+        print("RESEND RESPONSE:", email_result)
 
         return {
             "message": "Your message has been sent successfully."
