@@ -1,4 +1,5 @@
 ﻿import httpx
+import logging
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Response
@@ -39,6 +40,8 @@ from auth import (
 limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(title="Portfolio API")
+
+logger = logging.getLogger(__name__)
 
 app.state.limiter = limiter
 app.add_exception_handler(
@@ -555,6 +558,8 @@ def submit_contact_message(
         }
 
     except Exception:
+        logger.exception("Failed to send contact form email.")
+        
         raise HTTPException(
             status_code=502,
             detail="Unable to send your message. Please try again later.",
