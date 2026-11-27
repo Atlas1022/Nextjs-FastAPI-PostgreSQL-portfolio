@@ -2,7 +2,7 @@
 import logging
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import Response
+from fastapi import Response, UploadFile, File
 
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -512,6 +512,108 @@ def get_project(project_id: int, db: Session = Depends(get_db)):
 
     return project
 
+# Public endpoint: retrieve a project's stored image
+@app.get("/api/projects/{project_id}/image")
+def get_project_image(
+    project_id: int,
+    db: Session = Depends(get_db),
+):
+    project_image = db.query(ProjectImage).filter(
+        ProjectImage.project_id == project_id
+    ).first()
+
+    if project_image is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Project image not found.",
+        )
+
+    return Response(
+        content=project_image.image_data,
+        media_type=project_image.content_type,
+        headers={
+            "Cache-Control": "public, max-age=3600",
+        },
+    )
+
+# Admin endpoint: upload or replace a project's image
+@app.post("/api/admin/projects/{project_id}/image")
+def upload_project_image(
+    project_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    admin: AdminUser = Depends(get_current_admin),
+):
+    # Verify project exists
+    project = db.query(Project).filter(
+        Project.id == project_id
+    ).first()
+
+    if project is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Project not found.",
+        )
+
+    # Allowed image types
+    allowed_content_types = {
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+    }
+
+    if file.content_type not in allowed_content_types:
+        raise HTTPException(
+            status_code=400,
+            detail="Only JPEG, PNG, and WebP images are allowed.",
+        )
+
+    # Read image data
+    image_data = file.file.read()
+
+    # Limit image size to 5 MB
+    max_size = 5 * 1024 * 1024
+
+    if len(image_data) > max_size:
+        raise HTTPException(
+            status_code=400,
+            detail="Image must be smaller than 5 MB.",
+        )
+
+    if not image_data:
+        raise HTTPException(
+            status_code=400,
+            detail="Uploaded image is empty.",
+        )
+
+    # Find existing image
+    project_image = db.query(ProjectImage).filter(
+        ProjectImage.project_id == project_id
+    ).first()
+
+    if project_image:
+        # Replace existing image
+        project_image.filename = file.filename or "uploaded-image"
+        project_image.content_type = file.content_type
+        project_image.image_data = image_data
+    else:
+        # Create new image record
+        project_image = ProjectImage(
+            project_id=project_id,
+            filename=file.filename or "uploaded-image",
+            content_type=file.content_type,
+            image_data=image_data,
+        )
+
+        db.add(project_image)
+
+    db.commit()
+
+    return {
+        "message": "Project image uploaded successfully.",
+        "project_id": project_id,
+        "image_url": f"/api/projects/{project_id}/image",
+    }
 
 # ==========================================
 # Contact API
