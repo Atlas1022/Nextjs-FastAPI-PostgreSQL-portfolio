@@ -15,7 +15,7 @@ from itsdangerous import URLSafeTimedSerializer
 
 from database import get_db, test_connection
 from email_service import send_contact_email
-from models import Project, AdminUser, Skill, SiteSetting
+from models import Project, ProjectImage, AdminUser, Skill, SiteSetting
 from ai_service import generate_ai_response
 
 from schemas import (
