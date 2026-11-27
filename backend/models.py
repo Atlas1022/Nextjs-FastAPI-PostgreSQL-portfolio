@@ -1,7 +1,7 @@
 ﻿
 from datetime import datetime
 
-from sqlalchemy import String, Text, Boolean, DateTime, Integer, func
+from sqlalchemy import String, Text, Boolean, DateTime, Integer, LargeBinary, ForeignKey, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -33,6 +33,41 @@ class Project(Base):
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False
+    )
+class ProjectImage(Base):
+    __tablename__ = "project_images"
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+    )
+
+    project_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+    )
+
+    filename: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+    )
+
+    content_type: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+    )
+
+    image_data: Mapped[bytes] = mapped_column(
+        LargeBinary,
+        nullable=False,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
     )
 
 class Skill(Base):
