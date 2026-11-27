@@ -479,17 +479,42 @@ def delete_skill(
             detail="Failed to delete skill."
         )
 
+
 # Public endpoint: retrieve all projects
 @app.get(
     "/api/projects",
     response_model=list[ProjectResponse]
 )
-def get_projects(db: Session = Depends(get_db)):
+def get_projects(
+    request: Request,
+    db: Session = Depends(get_db)
+):
     projects = (
         db.query(Project)
         .order_by(Project.created_at.desc())
         .all()
     )
+
+    # Find projects that have images stored in the database
+    project_ids = [project.id for project in projects]
+
+    image_project_ids = set(
+        db.query(ProjectImage.project_id)
+        .filter(ProjectImage.project_id.in_(project_ids))
+        .all()
+    )
+
+    image_project_ids = {
+        project_id[0] for project_id in image_project_ids
+    }
+
+    # Use the database image endpoint when an uploaded image exists
+    for project in projects:
+        if project.id in image_project_ids:
+            project.image_url = (
+                f"{str(request.base_url).rstrip('/')}"
+                f"/api/projects/{project.id}/image"
+            )
 
     return projects
 
@@ -499,7 +524,11 @@ def get_projects(db: Session = Depends(get_db)):
     "/api/projects/{project_id}",
     response_model=ProjectResponse
 )
-def get_project(project_id: int, db: Session = Depends(get_db)):
+def get_project(
+    project_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
     project = db.query(Project).filter(
         Project.id == project_id
     ).first()
@@ -508,6 +537,17 @@ def get_project(project_id: int, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=404,
             detail="Project not found."
+        )
+
+    # Check whether this project has an uploaded database image
+    project_image = db.query(ProjectImage).filter(
+        ProjectImage.project_id == project_id
+    ).first()
+
+    if project_image is not None:
+        project.image_url = (
+            f"{str(request.base_url).rstrip('/')}"
+            f"/api/projects/{project.id}/image"
         )
 
     return project
