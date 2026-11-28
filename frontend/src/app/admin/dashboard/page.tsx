@@ -737,10 +737,10 @@ export default function AdminDashboard() {
                       <img
                         src={project.image_url}
                         alt={project.title}
-                        className="h-52 w-full object-cover"
+                        className="h-100 w-full object-cover"
                       />
                     ) : (
-                      <div className="flex h-52 items-center justify-center bg-slate-100 text-slate-400">
+                      <div className="flex h-100 items-center justify-center bg-slate-100 text-slate-400">
                         No project image
                       </div>
                     )}
@@ -755,7 +755,7 @@ export default function AdminDashboard() {
                       <h3 className="text-xl font-bold">
                         {project.title}
                       </h3>
-
+{/* Project description 
                       <p className="mt-3 line-clamp-3 leading-7 text-slate-600">
                         {project.description}
                       </p>
@@ -776,7 +776,7 @@ export default function AdminDashboard() {
                             ))}
                         </div>
                       )}
-
+*/}
                       {project.project_url && (
                         <a
                           href={project.project_url}

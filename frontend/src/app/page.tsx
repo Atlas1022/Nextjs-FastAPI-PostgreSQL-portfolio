@@ -121,8 +121,8 @@ export default async function Home() {
             FULL-STACK WEB DEVELOPER
           </p>
 
-          <h1 className="text-4xl font-bold leading-tight tracking-tight text-white sm:text-6xl">
-            Building modern web applications and digital experiences.
+          <h1 className="text-4xl font-bold leading-tight tracking-tight text-white sm:text-8xl">
+            ABDELRAHMAN ZAID
           </h1>
 
           <p className="mt-7 max-w-2xl text-lg leading-8 text-slate-400">
@@ -266,10 +266,10 @@ export default async function Home() {
                   <img
                     src={project.image_url}
                     alt={project.title}
-                    className="h-52 w-full object-cover"
+                    className="h-100 w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-52 items-center justify-center bg-slate-100 text-slate-400">
+                  <div className="flex h-100 items-center justify-center bg-slate-100 text-slate-400">
                     No project image
                   </div>
                 )}
@@ -280,7 +280,7 @@ export default async function Home() {
                       Featured Project
                     </span>
                   )}
-
+{/* Project title and description 
                   <h3 className="text-xl font-bold">
                     {project.title}
                   </h3>
@@ -305,13 +305,13 @@ export default async function Home() {
                         ))}
                     </div>
                   )}
-
+*/}
                   {project.project_url && (
                     <a
                       href={project.project_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-6 inline-block font-semibold text-blue-600 hover:text-blue-800"
+                      className="mt-6 block font-semibold text-[#2563eb] hover:text-[#1e40af]"
                     >
                       View Project →
                     </a>
