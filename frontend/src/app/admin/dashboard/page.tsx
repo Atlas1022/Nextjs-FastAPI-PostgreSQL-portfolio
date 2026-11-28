@@ -83,6 +83,7 @@ export default function AdminDashboard() {
     useState<number | null>(null);
 
   const [form, setForm] = useState<ProjectForm>(initialForm);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
   const [editingProjectId, setEditingProjectId] = useState<number | null>(null);
 
@@ -144,9 +145,44 @@ export default function AdminDashboard() {
     }));
   }
 
+  function handleImageChange(
+    event: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      setSelectedImage(null);
+      return;
+    }
+
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      setErrorMessage("Only JPEG, PNG, and WebP images are allowed.");
+      event.target.value = "";
+      setSelectedImage(null);
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMessage("Image must be smaller than 5 MB.");
+      event.target.value = "";
+      setSelectedImage(null);
+      return;
+    }
+
+    setErrorMessage("");
+    setSelectedImage(file);
+  }
+
   function handleCreateProject() {
     setEditingProjectId(null);
     setForm(initialForm);
+    setSelectedImage(null);
     setErrorMessage("");
     setSuccessMessage("");
     setShowProjectForm(true);
@@ -157,6 +193,7 @@ export default function AdminDashboard() {
     setShowProjectForm(true);
     setShowSkillForm(false);
     setEditingProjectId(project.id);
+    setSelectedImage(null);
 
     setForm({
       title: project.title,
@@ -218,9 +255,11 @@ export default function AdminDashboard() {
     setShowProjectForm(false);
     setEditingProjectId(null);
     setForm(initialForm);
+    setSelectedImage(null);
     setErrorMessage("");
     setSuccessMessage("");
   }
+
 
   async function handleSubmitProject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -240,8 +279,11 @@ export default function AdminDashboard() {
     };
 
     try {
+      let savedProject: Project;
+
+      // Create or update the project first
       if (editingProjectId !== null) {
-        const updatedProject = await apiFetch(
+        savedProject = await apiFetch(
           `/api/admin/projects/${editingProjectId}`,
           {
             method: "PUT",
@@ -251,24 +293,62 @@ export default function AdminDashboard() {
 
         setProjects((previous) =>
           previous.map((project) =>
-            project.id === updatedProject.id ? updatedProject : project
+            project.id === savedProject.id ? savedProject : project
           )
         );
-
-        setEditingProjectId(null);
-        setForm(initialForm);
-        setSuccessMessage("Project updated successfully!");
       } else {
-        const newProject = await apiFetch("/api/admin/projects", {
+        savedProject = await apiFetch("/api/admin/projects", {
           method: "POST",
           body: JSON.stringify(projectData),
         });
 
-        setProjects((previous) => [...previous, newProject]);
-        setForm(initialForm);
-        setSuccessMessage("Project created successfully!");
+        setProjects((previous) => [...previous, savedProject]);
       }
+
+      // Upload the selected image if one was provided
+      if (selectedImage) {
+        const formData = new FormData();
+        formData.append("file", selectedImage);
+
+        try {
+          await apiFetch(
+            `/api/admin/projects/${savedProject.id}/image`,
+            {
+              method: "POST",
+              body: formData,
+            }
+          );
+        } catch (uploadError) {
+          if (
+            uploadError instanceof ApiError &&
+            uploadError.status === 401
+          ) {
+            router.replace("/admin/login");
+            return;
+          }
+
+          setEditingProjectId(savedProject.id);
+          setErrorMessage(
+            uploadError instanceof Error
+              ? uploadError.message
+              : "Project saved, but image upload failed."
+          );
+
+          return;
+        }
+      }
+
+      // Reset the form after successful saving and uploading
+      setEditingProjectId(null);
+      setForm(initialForm);
+      setSelectedImage(null);
       setShowProjectForm(false);
+
+      setSuccessMessage(
+        editingProjectId !== null
+          ? "Project updated successfully!"
+          : "Project created successfully!"
+      );
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         router.replace("/admin/login");
@@ -571,19 +651,35 @@ export default function AdminDashboard() {
                 </div>
 
                 <div>
-                  <label htmlFor="image_url" className="mb-1 block font-medium">
-                    Image URL
+                  <label htmlFor="project_image" className="mb-1 block font-medium">
+                    Project Image
                   </label>
+
                   <input
-                    id="image_url"
-                    name="image_url"
-                    type="url"
-                    value={form.image_url}
-                    onChange={handleInputChange}
-                    maxLength={500}
-                    placeholder="https://example.com/image.jpg"
+                    id="project_image"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleImageChange}
                     className="w-full rounded-lg border p-3"
                   />
+
+                  <p className="mt-1 text-sm text-gray-500">
+                    Accepted formats: JPEG, PNG, WebP. Maximum size: 5 MB.
+                  </p>
+
+                  {selectedImage && (
+                    <div className="mt-3 space-y-2">
+                      <p className="text-sm text-green-600">
+                        Selected: {selectedImage.name}
+                      </p>
+
+                      <img
+                        src={URL.createObjectURL(selectedImage)}
+                        alt="Selected project preview"
+                        className="h-40 w-full rounded-lg border object-cover"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <label className="flex items-center gap-2">
@@ -624,9 +720,9 @@ export default function AdminDashboard() {
             </section>
 
           )}
-          
+
           <section className="rounded-xl bg-white p-6 shadow-sm">
-            
+
             {projects.length === 0 ? (
               <p className="text-gray-500">No projects found.</p>
             ) : (
@@ -641,10 +737,10 @@ export default function AdminDashboard() {
                       <img
                         src={project.image_url}
                         alt={project.title}
-                        className="h-52 w-full object-cover"
+                        className="h-100 w-full object-cover"
                       />
                     ) : (
-                      <div className="flex h-52 items-center justify-center bg-slate-100 text-slate-400">
+                      <div className="flex h-100 items-center justify-center bg-slate-100 text-slate-400">
                         No project image
                       </div>
                     )}
@@ -659,7 +755,7 @@ export default function AdminDashboard() {
                       <h3 className="text-xl font-bold">
                         {project.title}
                       </h3>
-
+{/* Project description 
                       <p className="mt-3 line-clamp-3 leading-7 text-slate-600">
                         {project.description}
                       </p>
@@ -680,7 +776,7 @@ export default function AdminDashboard() {
                             ))}
                         </div>
                       )}
-
+*/}
                       {project.project_url && (
                         <a
                           href={project.project_url}
@@ -724,9 +820,9 @@ export default function AdminDashboard() {
           </section>
         </section>
 
-        
 
-                {/* Skill Management Section */}
+
+        {/* Skill Management Section */}
         <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
 
           <div className="mb-6 flex items-center justify-between">
@@ -832,7 +928,7 @@ export default function AdminDashboard() {
 
           {/* Skills List */}
           <section className="mt-8 rounded-xl bg-white p-6 shadow-sm">
-            
+
             {skills.length === 0 ? (
               <p className="text-gray-500">No skills found.</p>
             ) : (
